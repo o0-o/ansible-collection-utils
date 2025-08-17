@@ -1,0 +1,30 @@
+# vim: ts=2:sw=2:sts=2:et:ft=yaml
+# -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
+---
+
+namespace: o0_o
+name: utils
+version: 1.0.0
+readme: README.md
+authors:
+  - oØ.o (@o0-o)
+description: >
+  General utility filters and plugins for Ansible.
+license: GPL-3.0-or-later
+tags:
+  - collection
+  - utils
+  - filters
+  - hostname
+repository: https://github.com/o0-o/ansible-collection-utils
+issues: https://github.com/o0-o/ansible-collection-utils/issues
+build_ignore:
+  - .git
+  - .github
+  - .venv
+  - .direnv
+  - .wip
+  - .pytest_cache
+  - .mypy_cache
+  - tests/output
+  - __pycache__

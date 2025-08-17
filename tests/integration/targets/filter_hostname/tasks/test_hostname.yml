@@ -1,0 +1,156 @@
+# vim: ts=2:sw=2:sts=2:et:ft=yaml.ansible
+# -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
+---
+# GNU General Public License v3.0+
+# SPDX-License-Identifier: GPL-3.0-or-later
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Copyright (c) 2025 oØ.o (@o0-o)
+#
+# This file is part of the o0_o.utils Ansible Collection.
+
+- name: Test single-label hostname
+  ansible.builtin.set_fact:
+    localhost_result: "{{ 'localhost' | o0_o.utils.hostname }}"
+
+- name: Assert single-label hostname results
+  ansible.builtin.assert:
+    that:
+      - localhost_result['short'] == 'localhost'
+      - localhost_result['labels'] == ['localhost']
+      - "'long' not in localhost_result"
+      - "'fqdn' not in localhost_result"
+
+- name: Test two-label hostname
+  ansible.builtin.set_fact:
+    two_label_result: "{{ 'server.local' | o0_o.utils.hostname }}"
+
+- name: Assert two-label hostname results
+  ansible.builtin.assert:
+    that:
+      - two_label_result['short'] == 'server'
+      - two_label_result['long'] == 'server.local'
+      - two_label_result['domain'] == 'local'
+      - two_label_result['tld'] == 'local'
+      - two_label_result['labels'] == ['server', 'local']
+      - "'fqdn' not in two_label_result"
+
+- name: Test FQDN (three labels)
+  ansible.builtin.set_fact:
+    fqdn_result: "{{ 'www.example.com' | o0_o.utils.hostname }}"
+
+- name: Assert FQDN results
+  ansible.builtin.assert:
+    that:
+      - fqdn_result['short'] == 'www'
+      - fqdn_result['long'] == 'www.example.com'
+      - fqdn_result['domain'] == 'example.com'
+      - fqdn_result['tld'] == 'com'
+      - fqdn_result['fqdn'] == 'www.example.com'
+      - fqdn_result['etld'] == 'com'
+      - fqdn_result['registered'] == 'example.com'
+      - fqdn_result['labels'] == ['www', 'example', 'com']
+
+- name: Test complex public suffix
+  ansible.builtin.set_fact:
+    uk_result: "{{ 'mail.example.co.uk' | o0_o.utils.hostname }}"
+
+- name: Assert complex public suffix results
+  ansible.builtin.assert:
+    that:
+      - uk_result['short'] == 'mail'
+      - uk_result['long'] == 'mail.example.co.uk'
+      - uk_result['etld'] == 'co.uk'
+      - uk_result['registered'] == 'example.co.uk'
+      - uk_result['tld'] == 'uk'
+
+- name: Test Unicode hostname
+  ansible.builtin.set_fact:
+    unicode_result: "{{ 'münchen.de' | o0_o.utils.hostname }}"
+
+- name: Assert Unicode hostname results
+  ansible.builtin.assert:
+    that:
+      - unicode_result['long'] == 'münchen.de'
+      - unicode_result['ascii'] == 'xn--mnchen-3ya.de'
+      - unicode_result['labels'][0] == 'xn--mnchen-3ya'
+
+- name: Test Punycode input conversion
+  ansible.builtin.set_fact:
+    punycode_result: "{{ 'xn--mnchen-3ya.de' | o0_o.utils.hostname }}"
+
+- name: Assert Punycode conversion results
+  ansible.builtin.assert:
+    that:
+      - punycode_result['long'] == 'münchen.de'
+      - punycode_result['ascii'] == 'xn--mnchen-3ya.de'
+
+- name: Test dict input with hostname key
+  ansible.builtin.set_fact:
+    dict_result: "{{ {'hostname': 'test.example.org'} | o0_o.utils.hostname }}"
+
+- name: Assert dict input results
+  ansible.builtin.assert:
+    that:
+      - dict_result['short'] == 'test'
+      - dict_result['long'] == 'test.example.org'
+      - dict_result['fqdn'] == 'test.example.org'
+
+- name: Test pretty field passthrough
+  ansible.builtin.set_fact:
+    pretty_result: >-
+      {{ {'hostname': 'server.local', 'pretty': 'Main Server'}
+         | o0_o.utils.hostname }}
+
+- name: Assert pretty field passthrough
+  ansible.builtin.assert:
+    that:
+      - pretty_result['pretty'] == 'Main Server'
+      - pretty_result['short'] == 'server'
+
+- name: Test trailing dot removal
+  ansible.builtin.set_fact:
+    trailing_dot_result: "{{ 'www.example.com.' | o0_o.utils.hostname }}"
+
+- name: Assert trailing dot removal
+  ansible.builtin.assert:
+    that:
+      - trailing_dot_result['long'] == 'www.example.com'
+      - trailing_dot_result['fqdn'] == 'www.example.com'
+      - "trailing_dot_result['long'][-1] != '.'"
+
+- name: Test empty input
+  ansible.builtin.set_fact:
+    empty_result: "{{ '' | o0_o.utils.hostname }}"
+
+- name: Assert empty input returns empty dict
+  ansible.builtin.assert:
+    that:
+      - empty_result == {}
+
+- name: Test failure with invalid hostname
+  block:
+    - name: Try hostname with space
+      ansible.builtin.set_fact:
+        invalid_result: "{{ 'server name.com' | o0_o.utils.hostname }}"
+      
+    - name: This should not be reached
+      ansible.builtin.fail:
+        msg: "Filter should have failed on invalid hostname"
+  
+  rescue:
+    - name: Assert error occurred
+      ansible.builtin.assert:
+        that:
+          - "'Invalid' in ansible_failed_result.msg"
+
+- name: Test ASCII field only present when different
+  ansible.builtin.set_fact:
+    ascii_only: "{{ 'www.example.com' | o0_o.utils.hostname }}"
+    needs_ascii: "{{ 'www.münchen.de' | o0_o.utils.hostname }}"
+
+- name: Assert ASCII field behavior
+  ansible.builtin.assert:
+    that:
+      - "'ascii' not in ascii_only"
+      - "'ascii' in needs_ascii"
