@@ -16,6 +16,90 @@ from typing import Any, Dict, List, Union
 
 from ansible.errors import AnsibleFilterError
 
+
+DOCUMENTATION = r"""
+---
+name: hostname
+short_description: Parse and structure hostname strings
+version_added: "1.0.0"
+description:
+  - Parses hostnames into structured components
+  - Supports Unicode/IDN hostnames with automatic Punycode conversion
+  - Extracts components like short name, domain, TLD, eTLD, and more
+options:
+  _input:
+    description:
+      - Hostname string to parse or dict with hostname fields
+      - If dict, looks for keys in order (long, fqdn, short, hostname)
+    type: raw
+    required: true
+requirements:
+  - dnspython
+  - idna
+  - tldextract
+author:
+  - oØ.o (@o0-o)
+"""
+
+EXAMPLES = r"""
+# Parse a simple hostname
+- debug:
+    msg: "{{ 'www.example.com' | o0_o.utils.hostname }}"
+# Returns: {short: www, long: www.example.com, domain: example.com, ...}
+
+# Parse Unicode hostname
+- debug:
+    msg: "{{ 'münchen.de' | o0_o.utils.hostname }}"
+# Returns: {short: münchen, long: münchen.de, ascii: xn--mnchen-3ya.de, ...}
+
+# Parse from dict
+- debug:
+    msg: "{{ {'hostname': 'server.local'} | o0_o.utils.hostname }}"
+"""
+
+RETURN = r"""
+short:
+  description: First label of the hostname
+  type: str
+  returned: when hostname has at least one label
+long:
+  description: Full hostname without trailing dot
+  type: str
+  returned: when hostname has 2+ labels
+domain:
+  description: Everything after the first label
+  type: str
+  returned: when hostname has 2+ labels
+tld:
+  description: Rightmost label (top-level domain)
+  type: str
+  returned: when hostname has 2+ labels
+fqdn:
+  description: Fully qualified domain name
+  type: str
+  returned: when hostname has 3+ labels
+etld:
+  description: Effective TLD from Public Suffix List
+  type: str
+  returned: when found in PSL
+registered:
+  description: Registered domain (eTLD+1)
+  type: str
+  returned: when eTLD is found
+ascii:
+  description: ASCII/Punycode representation
+  type: str
+  returned: when hostname contains non-ASCII characters
+labels:
+  description: List of DNS labels (in ASCII form)
+  type: list
+  returned: always
+pretty:
+  description: Human-friendly name (passthrough from input dict)
+  type: str
+  returned: when present in input dict
+"""
+
 try:
     import dns.name  # dnspython
 
