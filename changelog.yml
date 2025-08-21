@@ -3,6 +3,12 @@
 ---
 releases:
 
+  v1.0.1:
+    changes:
+      added:
+        - Added `__init__.py` to filter plugin directory for improved
+          import functionality.
+
   v1.0.0:
     changes:
       added:
