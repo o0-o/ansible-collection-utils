@@ -21,7 +21,7 @@ DOCUMENTATION = r"""
 ---
 name: si
 short_description: Parse values with SI or IEC unit prefixes
-version_added: "1.0.0"
+version_added: "1.1.0"
 description:
   - Parse values with SI (decimal) or IEC (binary) prefixes to base units
   - Extracts base unit from prefixed values

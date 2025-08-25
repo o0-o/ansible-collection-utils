@@ -3,6 +3,22 @@
 ---
 releases:
 
+  v1.1.0:
+    changes:
+      added:
+        - New `si` filter for parsing SI and IEC unit prefixes.
+        - Support for decimal SI prefixes (kilo to quetta, 10^3 to 10^30).
+        - Support for binary IEC prefixes (kibi to yobi, 2^10 to 2^80).
+        - Unit canonicalization (Hz -> hertz, B -> bytes, etc.).
+        - Binary mode for interpreting SI prefixes as IEC (GB -> GiB).
+        - Optimize parameter for pretty output formatting.
+        - Comprehensive unit tests with 26 test cases.
+        - Integration tests covering all major functionality.
+      minor_changes:
+        - Centralized test requirements structure with symlinks.
+        - Added linter configuration files (.yamllint, pyproject.toml).
+        - Improved code formatting compliance across the collection.
+
   v1.0.1:
     changes:
       added:
