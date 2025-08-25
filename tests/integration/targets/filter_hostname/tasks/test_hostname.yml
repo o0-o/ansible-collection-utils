@@ -133,11 +133,9 @@
     - name: Try hostname with space
       ansible.builtin.set_fact:
         invalid_result: "{{ 'server name.com' | o0_o.utils.hostname }}"
-      
     - name: This should not be reached
       ansible.builtin.fail:
         msg: "Filter should have failed on invalid hostname"
-  
   rescue:
     - name: Assert error occurred
       ansible.builtin.assert:
