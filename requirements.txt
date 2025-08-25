@@ -1,0 +1,6 @@
+# Test requirements for o0_o.utils collection
+
+# Required for hostname filter plugin
+dnspython
+idna
+tldextract

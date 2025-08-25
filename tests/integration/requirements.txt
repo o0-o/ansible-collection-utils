@@ -1,4 +1,1 @@
-# Integration test requirements for o0_o.utils collection
-dnspython
-idna
-tldextract
+../../requirements.txt
