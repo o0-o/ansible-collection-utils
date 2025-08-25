@@ -1,0 +1,105 @@
+# vim: ts=2:sw=2:sts=2:et:ft=yaml.ansible
+# -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
+---
+# GNU General Public License v3.0+
+# SPDX-License-Identifier: GPL-3.0-or-later
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Copyright (c) 2025 oØ.o (@o0-o)
+#
+# This file is part of the o0_o.utils Ansible Collection.
+
+- name: Test SI filter with basic SI prefixes
+  ansible.builtin.assert:
+    that:
+      - "('2400MHz' | o0_o.utils.si)['hertz'] == 2400000000"
+      - "('2400MHz' | o0_o.utils.si)['pretty'] == '2.4 GHz'"
+      - "('32GB' | o0_o.utils.si)['bytes'] == 32000000000"
+      - "('32GB' | o0_o.utils.si)['pretty'] == '32 GB'"
+      - "('1600W' | o0_o.utils.si)['watts'] == 1600"
+      - "('1600W' | o0_o.utils.si)['pretty'] == '1.6 kW'"
+
+- name: Test SI filter with IEC binary prefixes
+  ansible.builtin.assert:
+    that:
+      - "('32GiB' | o0_o.utils.si)['bytes'] == 34359738368"
+      - "('32GiB' | o0_o.utils.si)['pretty'] == '32 GiB'"
+      - "('1MiB' | o0_o.utils.si)['bytes'] == 1048576"
+      - "('1MiB' | o0_o.utils.si)['pretty'] == '1 MiB'"
+
+- name: Test SI filter with binary parameter
+  ansible.builtin.assert:
+    that:
+      - "('32GB' | o0_o.utils.si(binary=true))['bytes'] == 34359738368"
+      - "('32GB' | o0_o.utils.si(binary=true))['pretty'] == '32 GiB'"
+      - "('16MB' | o0_o.utils.si(binary=true))['bytes'] == 16777216"
+      - "('16MB' | o0_o.utils.si(binary=true))['pretty'] == '16 MiB'"
+
+- name: Test SI filter with optimize parameter
+  ansible.builtin.assert:
+    that:
+      # Default (optimize=true)
+      - "('2400MHz' | o0_o.utils.si)['pretty'] == '2.4 GHz'"
+      - "('1000000Hz' | o0_o.utils.si)['pretty'] == '1 MHz'"
+      # With optimize=false
+      - "('2400MHz' | o0_o.utils.si(optimize=false))['pretty'] == '2400 MHz'"
+      - >-
+        ('1000000Hz' | o0_o.utils.si(optimize=false))['pretty'] ==
+        '1000000 Hz'
+      - "('1024KB' | o0_o.utils.si(optimize=false))['pretty'] == '1024 kB'"
+
+- name: Test SI filter with case sensitivity (B vs b)
+  ansible.builtin.assert:
+    that:
+      # Uppercase B = bytes
+      - "('10GB' | o0_o.utils.si)['bytes'] == 10000000000"
+      - "('10GB' | o0_o.utils.si)['pretty'] == '10 GB'"
+      # Lowercase b = bits
+      - "('10Gb' | o0_o.utils.si)['bits'] == 10000000000"
+      - "('10Gb' | o0_o.utils.si)['pretty'] == '10 Gb'"
+
+- name: Test SI filter with uppercase K normalization
+  ansible.builtin.assert:
+    that:
+      # Uppercase K should be normalized to lowercase k
+      - "('1KHz' | o0_o.utils.si)['hertz'] == 1000"
+      - "('1KHz' | o0_o.utils.si)['pretty'] == '1 kHz'"
+      - "('1kHz' | o0_o.utils.si)['hertz'] == 1000"
+      - "('1kHz' | o0_o.utils.si)['pretty'] == '1 kHz'"
+
+- name: Test SI filter with canonical unit mapping
+  ansible.builtin.assert:
+    that:
+      - "'hertz' in ('100MHz' | o0_o.utils.si)"
+      - "'bytes' in ('10GB' | o0_o.utils.si)"
+      - "'bits' in ('10Gb' | o0_o.utils.si)"
+      - "'watts' in ('100W' | o0_o.utils.si)"
+      - "'transfers/s' in ('2133MT/s' | o0_o.utils.si)"
+      - "'bits/s' in ('100Mbit/s' | o0_o.utils.si)"
+
+- name: Test SI filter with invalid input
+  ansible.builtin.assert:
+    that:
+      - "('not a number' | o0_o.utils.si) == {}"
+      - "('32' | o0_o.utils.si) == {}"
+      - "('' | o0_o.utils.si) == {}"
+
+- name: Test SI filter with spacing variations
+  ansible.builtin.assert:
+    that:
+      - "('32 GB' | o0_o.utils.si)['bytes'] == 32000000000"
+      - "('2.4 GHz' | o0_o.utils.si)['hertz'] == 2400000000"
+
+- name: Test SI filter with decimal values
+  ansible.builtin.assert:
+    that:
+      - "('1.5GB' | o0_o.utils.si)['bytes'] == 1500000000"
+      - "('2.4GHz' | o0_o.utils.si)['hertz'] == 2400000000"
+
+- name: Test SI filter with large prefixes
+  ansible.builtin.assert:
+    that:
+      - "('1PB' | o0_o.utils.si)['bytes'] == 1e15"
+      - "('1EB' | o0_o.utils.si)['bytes'] == 1e18"
+      - "('1ZB' | o0_o.utils.si)['bytes'] == 1e21"
+      - "('1YB' | o0_o.utils.si)['bytes'] == 1e24"
