@@ -250,11 +250,11 @@ class FilterModule:
             # Always extract eTLD and registered domain
             ext = _TLD_EXTRACTOR(unicode_name)
             # ext.suffix is the public suffix (eTLD)
-            # ext.registered_domain is eTLD+1
+            # ext.top_domain_under_public_suffix is eTLD+1
             if ext.suffix:
                 result["etld"] = ext.suffix
-            if ext.registered_domain:
-                result["registered"] = ext.registered_domain
+            if ext.top_domain_under_public_suffix:
+                result["registered"] = ext.top_domain_under_public_suffix
 
         if isinstance(data, dict) and "pretty" in data:
             result["pretty"] = data["pretty"]
