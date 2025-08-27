@@ -1,5 +1,8 @@
 # o0_o.utils
 
+[![GitHub CI](https://github.com/o0-o/ansible-collection-utils/workflows/CI/badge.svg)](https://github.com/o0-o/ansible-collection-utils/actions)
+[![Ansible Galaxy](https://img.shields.io/badge/galaxy-o0__o.utils-660198.svg)](https://galaxy.ansible.com/ui/repo/published/o0_o/utils/)
+
 General utility filters and plugins for Ansible.
 
 ## Overview
