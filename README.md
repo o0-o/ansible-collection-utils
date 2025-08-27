@@ -86,6 +86,76 @@ The hostname filter returns a dictionary with the following keys (when applicabl
 - `pretty`: Passthrough from input dict if present
 - `list`: List of all components split on '.' (always present)
 
+#### si
+
+Parses SI (decimal) and IEC (binary) unit prefixes into structured data with byte calculations.
+
+```yaml
+- name: Parse size with SI prefix
+  debug:
+    msg: "{{ '20G' | o0_o.utils.si }}"
+  # Returns:
+  # {
+  #   "bytes": 20000000000,
+  #   "pretty": "20 GB",
+  #   "value": 20.0,
+  #   "prefix": "G",
+  #   "base_unit": "B",
+  #   "multiplier": 1000000000,
+  #   "base": 1000
+  # }
+
+- name: Parse with IEC binary prefix
+  debug:
+    msg: "{{ '5Gi' | o0_o.utils.si }}"
+  # Returns:
+  # {
+  #   "bytes": 5368709120,
+  #   "pretty": "5 GiB",
+  #   "value": 5.0,
+  #   "prefix": "Gi",
+  #   "base_unit": "B",
+  #   "multiplier": 1073741824,
+  #   "base": 1024
+  # }
+
+- name: Force binary interpretation
+  debug:
+    msg: "{{ '10GB' | o0_o.utils.si(binary=true) }}"
+  # Returns:
+  # {
+  #   "bytes": 10737418240,
+  #   "pretty": "10 GiB",
+  #   "value": 10.0,
+  #   "prefix": "Gi",
+  #   "base_unit": "B",
+  #   "multiplier": 1073741824,
+  #   "base": 1024
+  # }
+
+- name: Parse frequency units
+  debug:
+    msg: "{{ '2.4GHz' | o0_o.utils.si }}"
+  # Returns:
+  # {
+  #   "hertz": 2400000000,
+  #   "pretty": "2.4 GHz",
+  #   "value": 2.4,
+  #   "prefix": "G",
+  #   "base_unit": "hertz",
+  #   "multiplier": 1000000000,
+  #   "base": 1000
+  # }
+```
+
+The si filter supports:
+- **SI decimal prefixes**: k/K (kilo), M (mega), G (giga), T (tera), P (peta), E (exa), Z (zetta), Y (yotta), R (ronna), Q (quetta)
+- **IEC binary prefixes**: Ki (kibi), Mi (mebi), Gi (gibi), Ti (tebi), Pi (pebi), Ei (exbi), Zi (zebi), Yi (yobi)
+- **Automatic byte assumption**: Bare prefixes like "20G" are treated as bytes ("20GB")
+- **Unit canonicalization**: Hz→hertz, B→bytes, s→seconds, etc.
+- **Binary mode**: Forces SI prefixes to be interpreted as IEC (GB→GiB)
+- **Optimized output**: Returns simplified format when optimize=true
+
 ## Development & Testing
 
 ```bash
