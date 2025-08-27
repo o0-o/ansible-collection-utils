@@ -14,5 +14,8 @@ from __future__ import annotations
 from ansible_collections.o0_o.utils.plugins.filter.hostname import (
     FilterModule as HostnameFilter,
 )
+from ansible_collections.o0_o.utils.plugins.filter.si import (
+    FilterModule as SiFilter,
+)
 
-__all__ = ["HostnameFilter"]
+__all__ = ["HostnameFilter", "SiFilter"]
