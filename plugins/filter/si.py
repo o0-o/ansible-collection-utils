@@ -27,11 +27,13 @@ description:
   - Extracts base unit from prefixed values
   - Supports SI prefixes from kilo (10^3) to quetta (10^30)
   - Supports IEC binary prefixes from kibi (2^10) to yobi (2^80)
+  - Bare SI/IEC prefixes (e.g., "20G", "5M") are treated as bytes
 options:
   _input:
     description:
       - String value with SI or IEC prefix and unit
-      - 'Examples: "1000MHz", "32GB", "4GiB"'
+      - 'Examples: "1000MHz", "32GB", "4GiB", "20G", "5M"'
+      - Bare prefixes like "20G" are treated as "20GB"
     type: str
     required: true
   binary:
@@ -76,6 +78,17 @@ EXAMPLES = r"""
   ansible.builtin.debug:
     msg: "{{ '32GiB' | o0_o.utils.si }}"
   # Output: {"bytes": 34359738368, "pretty": "32 GiB"}
+
+# Parse bare SI prefixes (common in df, du output)
+- name: Parse size with bare SI prefix
+  ansible.builtin.debug:
+    msg: "{{ '20G' | o0_o.utils.si }}"
+  # Output: {"bytes": 20000000000, "pretty": "20 GB"}
+
+- name: Parse size with bare SI prefix (binary mode)
+  ansible.builtin.debug:
+    msg: "{{ '20G' | o0_o.utils.si(binary=true) }}"
+  # Output: {"bytes": 21474836480, "pretty": "20 GiB"}
 
 # Force binary interpretation of SI prefix (useful for dmidecode output)
 - name: Parse memory size as binary
