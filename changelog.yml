@@ -3,6 +3,20 @@
 ---
 releases:
 
+  v1.1.1:
+    changes:
+      minor_changes:
+        - si filter now automatically treats bare SI/IEC prefixes (e.g., "20G",
+          "5M") as bytes, making it compatible with common command output from
+          tools like df, du, and free.
+        - Improved regex parsing in si filter for better prefix detection.
+        - Added comprehensive documentation and examples for bare prefix
+          behavior.
+        - Added GitHub CI and Ansible Galaxy badges to README.
+      bugfixes:
+        - Fixed si filter to preserve original behavior where bare numbers
+          without prefix or unit return empty dict.
+
   v1.1.0:
     changes:
       added:
