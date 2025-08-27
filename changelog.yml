@@ -3,6 +3,16 @@
 ---
 releases:
 
+  v1.1.2:
+    changes:
+      minor_changes:
+        - Export SiFilter in filter module __init__ for cleaner imports.
+        - Allows importing as `from ...filter import SiFilter` instead of
+          requiring full module path.
+        - Updated Ansible Galaxy badge to display version number with proper
+          title casing.
+        - Added collection dependency installation to CI workflow.
+
   v1.1.1:
     changes:
       minor_changes:
