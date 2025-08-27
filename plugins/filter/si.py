@@ -206,10 +206,9 @@ class FilterModule(object):
         # Clean up the input
         value_str = value_str.strip()
 
-        # Pattern to match number followed by optional prefix and unit
-        # Handles both SI (single letter) and IEC (two letter 'i')
-        # Groups: (number) (whitespace) (SI/IEC prefix) (base unit)
-        pattern = r"^([\d.]+)\s*([kKMGTPEZYRQ]i?|[kKMGTPEZY]?)([A-Za-z].*)$"
+        # Simple pattern to separate number from suffix
+        # Groups: (number) (suffix - everything after number)
+        pattern = r"^([\d.]+)\s*(.*)$"
         match = re.match(pattern, value_str)
 
         if not match:
@@ -217,8 +216,33 @@ class FilterModule(object):
 
         try:
             number = float(match.group(1))
-            prefix = match.group(2)
-            base_unit = match.group(3).strip()
+            suffix = match.group(2).strip()
+
+            # Parse suffix to extract prefix and base unit
+            prefix = ""
+            base_unit = suffix
+
+            if suffix:
+                # Check for IEC binary prefix (2 chars ending with 'i')
+                if (
+                    len(suffix) >= 2
+                    and suffix[1] == "i"
+                    and suffix[0] in "kKMGTPEZYRQ"
+                ):
+                    prefix = suffix[:2]
+                    base_unit = suffix[2:]
+                # Check for SI decimal prefix (single char)
+                elif suffix[0] in "kKMGTPEZYRQ":
+                    prefix = suffix[0]
+                    base_unit = suffix[1:]
+
+            # If we have a prefix but no base unit, assume bytes
+            if prefix and not base_unit:
+                base_unit = "B"
+
+            # If we have neither prefix nor unit, return empty dict
+            if not prefix and not base_unit:
+                return {}
 
             # Determine which multiplier to use and track if using IEC
             using_iec = False

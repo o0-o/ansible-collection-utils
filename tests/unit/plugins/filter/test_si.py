@@ -65,6 +65,39 @@ class TestSiFilter:
         assert result["bytes"] == 16777216  # 16 * 2^20
         assert result["pretty"] == "16 MiB"
 
+    def test_bare_si_prefixes_as_bytes(self):
+        """Test that bare SI prefixes are treated as bytes."""
+        # Bare SI prefixes should be interpreted as bytes
+        result = self.si("20G")
+        assert result["bytes"] == 20000000000
+        assert result["pretty"] == "20 GB"
+
+        result = self.si("5M")
+        assert result["bytes"] == 5000000
+        assert result["pretty"] == "5 MB"
+
+        result = self.si("1024K")
+        assert result["bytes"] == 1024000
+        assert result["pretty"] == "1.024 MB"
+
+        # With binary flag, bare prefixes become IEC
+        result = self.si("20G", binary=True)
+        assert result["bytes"] == 21474836480  # 20 * 2^30
+        assert result["pretty"] == "20 GiB"
+
+        result = self.si("5M", binary=True)
+        assert result["bytes"] == 5242880  # 5 * 2^20
+        assert result["pretty"] == "5 MiB"
+
+        # Bare IEC prefixes should also be treated as bytes
+        result = self.si("2Ti")
+        assert result["bytes"] == 2199023255552  # 2 * 2^40
+        assert result["pretty"] == "2 TiB"
+
+        result = self.si("8Gi")
+        assert result["bytes"] == 8589934592  # 8 * 2^30
+        assert result["pretty"] == "8 GiB"
+
     def test_binary_parameter(self):
         """Test binary parameter forces IEC interpretation."""
         # Without binary flag - SI interpretation
