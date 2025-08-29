@@ -3,6 +3,19 @@
 ---
 releases:
 
+  v1.2.0:
+    changes:
+      minor_changes:
+        - hostname filter now handles non-RFC5891-compliant hostnames
+          gracefully instead of raising errors.
+        - Added compliance dict with rfc5891 boolean field to indicate whether
+          hostname meets RFC 5891 (IDNA2008) standards.
+        - ASCII/Punycode field is now only included for RFC5891-compliant
+          hostnames with non-ASCII characters.
+        - Hostnames with underscores (common in CI environments like GitHub
+          Actions) are now parseable but marked as non-compliant.
+        - Updated unit and integration tests to validate compliance field.
+
   v1.1.2:
     changes:
       minor_changes:

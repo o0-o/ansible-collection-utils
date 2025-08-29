@@ -89,11 +89,19 @@ registered:
 ascii:
   description: ASCII/Punycode representation
   type: str
-  returned: when hostname contains non-ASCII characters
+  returned: when hostname has non-ASCII and is RFC 5891 compliant
 labels:
   description: List of DNS labels (in ASCII form)
   type: list
   returned: always
+compliance:
+  description: Standards compliance information
+  type: dict
+  returned: always
+  contains:
+    rfc5891:
+      description: Whether hostname is RFC 5891 (IDNA2008) compliant
+      type: bool
 pretty:
   description: Human-friendly name (passthrough from input dict)
   type: str
@@ -196,7 +204,7 @@ class FilterModule:
 
         raw = self._coerce_hostname_str(data)
         if not raw:
-            return {}
+            return {}  # No compliance field for empty input
 
         # Track if hostname is absolute (has trailing dot)
         is_abs = raw.endswith(".")
@@ -204,13 +212,18 @@ class FilterModule:
         # For IDNA, we need to work without the trailing dot
         hostname_no_dot = raw[:-1] if is_abs else raw
 
-        # IDNA encode/decode to validate and normalize Unicode names
+        # Try IDNA encode/decode to validate and normalize Unicode names
+        rfc5891_compliant = True
+        ascii_name = None
         try:
             # IDNA round-trip for strict validation & normalization
             ascii_name = idna.encode(hostname_no_dot).decode("ascii")
             unicode_name = idna.decode(ascii_name.encode("ascii"))
-        except Exception as e:
-            raise AnsibleFilterError(f"Invalid IDN hostname: {e}")
+        except Exception:
+            # Hostname doesn't comply with RFC 5891 (IDNA2008)
+            # Fall back to simple processing without ASCII conversion
+            rfc5891_compliant = False
+            unicode_name = hostname_no_dot
 
         # Parse and validate labels with dnspython
         labels: List[str]
@@ -232,6 +245,9 @@ class FilterModule:
         # Assemble result
         result: Dict[str, Any] = {
             "labels": labels,  # ASCII labels for stable keys
+            "compliance": {
+                "rfc5891": rfc5891_compliant,
+            },
         }
 
         if labels:
@@ -240,8 +256,8 @@ class FilterModule:
             if len(labels) >= 2:
                 # unicode version without trailing dot
                 result["long"] = unicode_name
-                # Only include ascii if it differs from long
-                if ascii_name != unicode_name:
+                # Only include ascii if it differs and we have it
+                if ascii_name and ascii_name != unicode_name:
                     result["ascii"] = ascii_name
                 result["domain"] = ".".join(unicode_labels[1:])
                 result["tld"] = labels[-1]

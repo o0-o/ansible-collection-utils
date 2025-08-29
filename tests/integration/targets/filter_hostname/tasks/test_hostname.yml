@@ -18,6 +18,7 @@
     that:
       - localhost_result['short'] == 'localhost'
       - localhost_result['labels'] == ['localhost']
+      - localhost_result['compliance']['rfc5891'] == true
       - "'long' not in localhost_result"
       - "'fqdn' not in localhost_result"
 
@@ -33,6 +34,7 @@
       - two_label_result['domain'] == 'local'
       - two_label_result['tld'] == 'local'
       - two_label_result['labels'] == ['server', 'local']
+      - two_label_result['compliance']['rfc5891'] == true
       - "'fqdn' not in two_label_result"
 
 - name: Test FQDN (three labels)
@@ -50,6 +52,7 @@
       - fqdn_result['etld'] == 'com'
       - fqdn_result['registered'] == 'example.com'
       - fqdn_result['labels'] == ['www', 'example', 'com']
+      - fqdn_result['compliance']['rfc5891'] == true
 
 - name: Test complex public suffix
   ansible.builtin.set_fact:
@@ -128,19 +131,42 @@
     that:
       - empty_result == {}
 
-- name: Test failure with invalid hostname
-  block:
-    - name: Try hostname with space
-      ansible.builtin.set_fact:
-        invalid_result: "{{ 'server name.com' | o0_o.utils.hostname }}"
-    - name: This should not be reached
-      ansible.builtin.fail:
-        msg: "Filter should have failed on invalid hostname"
-  rescue:
-    - name: Assert error occurred
-      ansible.builtin.assert:
-        that:
-          - "'Invalid' in ansible_failed_result.msg"
+- name: Test non-compliant hostname with underscore
+  ansible.builtin.set_fact:
+    underscore_result: "{{ 'server_example.com' | o0_o.utils.hostname }}"
+
+- name: Assert non-compliant hostname with underscore
+  ansible.builtin.assert:
+    that:
+      - underscore_result['short'] == 'server_example'
+      - underscore_result['long'] == 'server_example.com'
+      - underscore_result['compliance']['rfc5891'] == false
+      - "'ascii' not in underscore_result"  # No ASCII for non-compliant names
+
+- name: Test GitHub Actions style hostname
+  ansible.builtin.set_fact:
+    github_hostname: >-
+      {{ 'sjc20-bb710_b2b45946-6f13-4bea-9a2a-a9523efe7d5c-D220B7FDBDBD.local'
+         | o0_o.utils.hostname }}
+
+- name: Assert GitHub Actions hostname is non-compliant but parseable
+  ansible.builtin.assert:
+    that:
+      - github_hostname['compliance']['rfc5891'] == false
+      - github_hostname['short'] is defined
+      - github_hostname['long'] is defined
+      - "'ascii' not in github_hostname"  # No ASCII for non-compliant
+
+- name: Test hostname with leading hyphen
+  ansible.builtin.set_fact:
+    leading_hyphen: "{{ '-server.com' | o0_o.utils.hostname }}"
+
+- name: Assert hostname with leading hyphen is non-compliant
+  ansible.builtin.assert:
+    that:
+      - leading_hyphen['compliance']['rfc5891'] == false
+      - leading_hyphen['short'] == '-server'
+      - leading_hyphen['long'] == '-server.com'
 
 - name: Test ASCII field only present when different
   ansible.builtin.set_fact:
@@ -152,3 +178,5 @@
     that:
       - "'ascii' not in ascii_only"
       - "'ascii' in needs_ascii"
+      - ascii_only['compliance']['rfc5891'] == true
+      - needs_ascii['compliance']['rfc5891'] == true

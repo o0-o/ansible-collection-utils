@@ -135,6 +135,16 @@ def test_hostname_parsing(filter_module, hostname, expected):
                 result[key] == value
             ), f"{key}: expected {value}, got {result[key]}"
 
+    # Ensure compliance dict is present for non-empty hostnames
+    if hostname:  # Skip compliance check for empty input
+        assert "compliance" in result, "compliance field missing"
+        assert (
+            "rfc5891" in result["compliance"]
+        ), "rfc5891 compliance status missing"
+        assert (
+            result["compliance"]["rfc5891"] is True
+        ), "Expected RFC5891 compliant"
+
 
 @pytest.mark.parametrize(
     "input_dict,expected_short",
@@ -180,17 +190,78 @@ def test_invalid_input_types(filter_module, invalid_input):
 @pytest.mark.parametrize(
     "invalid_hostname",
     [
-        "server name.com",  # Space not allowed
-        "server@example.com",  # @ not allowed
-        "server_example.com",  # Underscore not allowed in hostnames
-        "-server.com",  # Can't start with hyphen
-        "server-.com",  # Can't end with hyphen
+        "server name.com",  # Space not allowed - non-compliant
+        "server@example.com",  # @ not allowed - non-compliant
+        "-server.com",  # Can't start with hyphen - non-compliant
+        "server-.com",  # Can't end with hyphen - non-compliant
     ],
 )
 def test_invalid_hostnames(filter_module, invalid_hostname):
-    """Test that invalid hostnames raise errors."""
-    with pytest.raises(AnsibleFilterError, match="Invalid"):
-        filter_module.hostname(invalid_hostname)
+    """Test that invalid hostnames are marked as non-compliant."""
+    # All these hostnames are parseable but non-compliant with RFC5891
+    result = filter_module.hostname(invalid_hostname)
+    assert "compliance" in result
+    assert result["compliance"]["rfc5891"] is False
+
+
+@pytest.mark.parametrize(
+    "non_compliant_hostname,expected",
+    [
+        # GitHub Actions runner hostname with underscores
+        (
+            "sjc20-bb710_b2b45946-6f13-4bea-9a2a-a9523efe7d5c-"
+            "D220B7FDBDBD.local",
+            {
+                "short": "sjc20-bb710_b2b45946-6f13-4bea-9a2a-"
+                "a9523efe7d5c-d220b7fdbdbd",
+                "long": "sjc20-bb710_b2b45946-6f13-4bea-9a2a-"
+                "a9523efe7d5c-d220b7fdbdbd.local",
+                "domain": "local",
+                "tld": "local",
+                "compliance": {"rfc5891": False},
+                "_absent": ["ascii", "fqdn", "etld", "registered"],
+            },
+        ),
+        # Simple hostname with underscore
+        (
+            "server_example.com",
+            {
+                "short": "server_example",
+                "long": "server_example.com",
+                "domain": "com",
+                "tld": "com",
+                "etld": "com",
+                "registered": "server_example.com",
+                "compliance": {"rfc5891": False},
+                "_absent": ["ascii", "fqdn"],
+            },
+        ),
+    ],
+)
+def test_non_compliant_hostnames(
+    filter_module, non_compliant_hostname, expected
+):
+    """Test non-RFC5891-compliant hostnames are handled gracefully."""
+    result = filter_module.hostname(non_compliant_hostname)
+
+    # Check expected fields are present
+    for key, value in expected.items():
+        if key == "_absent":
+            continue
+        assert key in result, f"Missing key: {key}"
+        assert (
+            result[key] == value
+        ), f"Key {key}: expected {value}, got {result[key]}"
+
+    # Check expected absent fields
+    if "_absent" in expected:
+        for key in expected["_absent"]:
+            assert key not in result, f"Key {key} should not be present"
+
+    # Ensure compliance dict is always present
+    assert "compliance" in result
+    assert "rfc5891" in result["compliance"]
+    assert result["compliance"]["rfc5891"] is False
 
 
 @pytest.mark.parametrize(
@@ -219,3 +290,18 @@ def test_missing_dependencies(
 
     with pytest.raises(AnsibleFilterError, match=error_pattern):
         filter_module.hostname("example.com")
+
+
+def test_compliant_hostname_with_compliance_field(filter_module):
+    """Test compliant hostnames have compliance field set correctly."""
+    result = filter_module.hostname("www.example.com")
+
+    # Ensure compliance dict is present and correct
+    assert "compliance" in result
+    assert "rfc5891" in result["compliance"]
+    assert result["compliance"]["rfc5891"] is True
+
+    # Ensure other expected fields are present
+    assert result["short"] == "www"
+    assert result["long"] == "www.example.com"
+    assert result["domain"] == "example.com"
