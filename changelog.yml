@@ -3,6 +3,13 @@
 ---
 releases:
 
+  v1.2.1:
+    changes:
+      minor_changes:
+        - Improved si filter output formatting to use consistent decimal
+          precision (2 decimal places with trailing zeros removed).
+        - Updated unit tests to match correct filter behavior.
+
   v1.2.0:
     changes:
       minor_changes:
