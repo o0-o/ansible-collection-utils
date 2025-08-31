@@ -43,7 +43,7 @@ class TestSiFilter:
         """Test parsing memory transfer rates."""
         result = self.si("2133MT/s")
         assert result["transfers/s"] == 2133000000
-        assert result["pretty"] == "2.133 GT/s"  # Optimized to GT/s
+        assert result["pretty"] == "2.13 GT/s"  # Optimized to GT/s
 
     def test_parse_memory_size_si(self):
         """Test parsing memory sizes with SI prefixes."""
@@ -78,7 +78,7 @@ class TestSiFilter:
 
         result = self.si("1024K")
         assert result["bytes"] == 1024000
-        assert result["pretty"] == "1.024 MB"
+        assert result["pretty"] == "1.02 MB"
 
         # With binary flag, bare prefixes become IEC
         result = self.si("20G", binary=True)
@@ -279,4 +279,4 @@ class TestSiFilter:
 
         result = self.si("1024KB", optimize=True)
         assert result["bytes"] == 1024000
-        assert result["pretty"] == "1.024 MB"  # Optimizes to MB
+        assert result["pretty"] == "1.02 MB"  # Optimizes to MB

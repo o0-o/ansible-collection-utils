@@ -316,24 +316,27 @@ class FilterModule(object):
                 if display_best_prefix == "K":
                     display_best_prefix = "k"
 
-            # Format pretty string
-            if display_best_prefix:
-                pretty = f"{display_value:g} {display_best_prefix}{base_unit}"
+            # Format pretty string with 2 decimal places if needed
+            # Check if the value is essentially an integer
+            if abs(display_value - round(display_value)) < 0.01:
+                # Display as integer
+                display_str = str(int(round(display_value)))
             else:
-                # Avoid scientific notation for large integers
-                if display_value >= 1000 and display_value == int(
-                    display_value
-                ):
-                    pretty = f"{int(display_value)} {base_unit}"
-                else:
-                    pretty = f"{display_value:g} {base_unit}"
+                # Round to 2 decimal places and remove trailing zeros
+                display_str = f"{display_value:.2f}".rstrip("0").rstrip(".")
+
+            if display_best_prefix:
+                pretty = f"{display_str} {display_best_prefix}{base_unit}"
+            else:
+                pretty = f"{display_str} {base_unit}"
 
             # Normalize base unit using our mapping
             canonical_unit = FilterModule.BASE_UNITS.get(
                 base_unit, base_unit.lower()
             )
 
-            return {canonical_unit: base_value, "pretty": pretty}
+            # Return base_value as int (always in base units like bytes)
+            return {canonical_unit: int(base_value), "pretty": pretty}
 
         except (ValueError, TypeError):
             return {}
