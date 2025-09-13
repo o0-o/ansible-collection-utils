@@ -1,0 +1,172 @@
+# vim: ts=2:sw=2:sts=2:et:ft=yaml.ansible
+# -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
+---
+# GNU General Public License v3.0+
+# SPDX-License-Identifier: GPL-3.0-or-later
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Copyright (c) 2025 oØ.o (@o0-o)
+#
+# This file is part of the o0_o.utils Ansible Collection.
+
+- name: Test wantlist filter with default want_list=true
+  ansible.builtin.assert:
+    that:
+      - "None | o0_o.utils.wantlist == []"
+      - "'foo' | o0_o.utils.wantlist == ['foo']"
+      - "'' | o0_o.utils.wantlist == ['']"
+      - "['foo', 'bar'] | o0_o.utils.wantlist == ['foo', 'bar']"
+      - "[] | o0_o.utils.wantlist == []"
+      - "42 | o0_o.utils.wantlist == [42]"
+      - "true | o0_o.utils.wantlist == [true]"
+      - "false | o0_o.utils.wantlist == [false]"
+
+- name: Test wantlist filter with want_list=false
+  ansible.builtin.assert:
+    that:
+      - "None | o0_o.utils.wantlist(false) == None"
+      - "'foo' | o0_o.utils.wantlist(false) == 'foo'"
+      - "'' | o0_o.utils.wantlist(false) == ''"
+      - "[] | o0_o.utils.wantlist(false) == None"
+      - "['single'] | o0_o.utils.wantlist(false) == 'single'"
+      - "['foo', 'bar'] | o0_o.utils.wantlist(false) == ['foo', 'bar']"
+      - "42 | o0_o.utils.wantlist(false) == 42"
+      - "true | o0_o.utils.wantlist(false) == true"
+      - "false | o0_o.utils.wantlist(false) == false"
+
+- name: Test wantlist filter with tuples
+  vars:
+    empty_tuple: []
+    single_tuple: ['item']
+    multi_tuple: ['foo', 'bar', 'baz']
+  ansible.builtin.assert:
+    that:
+      - "empty_tuple | o0_o.utils.wantlist == []"
+      - "single_tuple | o0_o.utils.wantlist == ['item']"
+      - "multi_tuple | o0_o.utils.wantlist == ['foo', 'bar', 'baz']"
+      - "empty_tuple | o0_o.utils.wantlist(false) == None"
+      - "single_tuple | o0_o.utils.wantlist(false) == 'item'"
+      - "multi_tuple | o0_o.utils.wantlist(false) == ['foo', 'bar', 'baz']"
+
+- name: Test wantlist filter with dictionary
+  vars:
+    test_dict:
+      key1: value1
+      key2: value2
+  ansible.builtin.assert:
+    that:
+      - "test_dict | o0_o.utils.wantlist == [test_dict]"
+      - "test_dict | o0_o.utils.wantlist(false) == test_dict"
+
+- name: Test wantlist filter with range
+  ansible.builtin.assert:
+    that:
+      - "range(0) | o0_o.utils.wantlist == []"
+      - "range(1) | o0_o.utils.wantlist == [0]"
+      - "range(3) | o0_o.utils.wantlist == [0, 1, 2]"
+      - "range(0) | o0_o.utils.wantlist(false) == None"
+      - "range(1) | o0_o.utils.wantlist(false) == 0"
+      - "range(3) | o0_o.utils.wantlist(false) == [0, 1, 2]"
+
+- name: Test wantlist filter with nested lists
+  vars:
+    nested_list: [['a', 'b'], ['c', 'd']]
+    single_nested: [['x', 'y']]
+  ansible.builtin.assert:
+    that:
+      - "nested_list | o0_o.utils.wantlist == [['a', 'b'], ['c', 'd']]"
+      - "single_nested | o0_o.utils.wantlist == [['x', 'y']]"
+      - "nested_list | o0_o.utils.wantlist(false) == [['a', 'b'], ['c', 'd']]"
+      - "single_nested | o0_o.utils.wantlist(false) == ['x', 'y']"
+
+- name: Test wantlist filter with dict methods
+  vars:
+    sample_dict:
+      alpha: 1
+      beta: 2
+      gamma: 3
+  ansible.builtin.assert:
+    that:
+      - "sample_dict.keys() | o0_o.utils.wantlist | sort == ['alpha', 'beta', 'gamma']"
+      - "sample_dict.values() | o0_o.utils.wantlist | sort == [1, 2, 3]"
+
+- name: Test wantlist filter in practical scenarios
+  vars:
+    # Sometimes a variable might be a string or a list
+    servers_string: "web01.example.com"
+    servers_list: ["web01.example.com", "web02.example.com"]
+    servers_empty: []
+    servers_none: null
+  ansible.builtin.assert:
+    that:
+      # Ensure we always have a list to iterate over
+      - "servers_string | o0_o.utils.wantlist == ['web01.example.com']"
+      - "servers_list | o0_o.utils.wantlist == ['web01.example.com', 'web02.example.com']"
+      - "servers_empty | o0_o.utils.wantlist == []"
+      - "servers_none | o0_o.utils.wantlist == []"
+      # Get simplified form when we want a single value
+      - "servers_string | o0_o.utils.wantlist(false) == 'web01.example.com'"
+      - "servers_list | o0_o.utils.wantlist(false) == ['web01.example.com', 'web02.example.com']"
+      - "servers_empty | o0_o.utils.wantlist(false) == None"
+      - "servers_none | o0_o.utils.wantlist(false) == None"
+
+- name: Test wantlist filter with conditional logic
+  vars:
+    maybe_list: "single_item"
+    definitely_list: ["item1", "item2"]
+  ansible.builtin.assert:
+    that:
+      # Always iterate safely
+      - "(maybe_list | o0_o.utils.wantlist | length) >= 1"
+      - "(definitely_list | o0_o.utils.wantlist | length) == 2"
+      # Check if we have multiple items
+      - "(maybe_list | o0_o.utils.wantlist | length) == 1"
+      - "(definitely_list | o0_o.utils.wantlist | length) > 1"
+
+- name: Test wantlist filter with loop scenarios
+  vars:
+    hosts_input_var: "localhost"
+  set_fact:
+    loop_items: "{{ loop_items | default([]) + [item] }}"
+  loop: "{{ hosts_input_var | o0_o.utils.wantlist }}"
+
+- name: Verify loop with single string
+  ansible.builtin.assert:
+    that:
+      - "loop_items == ['localhost']"
+
+- name: Reset loop_items for next test
+  set_fact:
+    loop_items: []
+
+- name: Test wantlist filter with multiple items loop
+  vars:
+    hosts_input_var: ["host1", "host2", "host3"]
+  set_fact:
+    loop_items: "{{ loop_items | default([]) + [item] }}"
+  loop: "{{ hosts_input_var | o0_o.utils.wantlist }}"
+
+- name: Verify loop with list
+  ansible.builtin.assert:
+    that:
+      - "loop_items == ['host1', 'host2', 'host3']"
+
+- name: Test wantlist filter chain with other filters
+  vars:
+    mixed_input: "value"
+  ansible.builtin.assert:
+    that:
+      - "mixed_input | o0_o.utils.wantlist | map('upper') | list == ['VALUE']"
+      - "['a', 'b'] | o0_o.utils.wantlist | join(',') == 'a,b'"
+      - "None | o0_o.utils.wantlist | default(['default']) == []"
+
+- name: Test wantlist filter with numeric lists
+  vars:
+    numbers: [1, 2, 3, 4, 5]
+    single_num: [42]
+  ansible.builtin.assert:
+    that:
+      - "numbers | o0_o.utils.wantlist == [1, 2, 3, 4, 5]"
+      - "single_num | o0_o.utils.wantlist(false) == 42"
+      - "numbers | o0_o.utils.wantlist | sum == 15"
+      - "single_num | o0_o.utils.wantlist | sum == 42"
