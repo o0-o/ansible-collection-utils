@@ -13,8 +13,12 @@
   ansible.builtin.assert:
     that:
       - "'foo,bar,baz' | o0_o.utils.string2items == ['foo', 'bar', 'baz']"
-      - "'foo, bar, baz' | o0_o.utils.string2items == ['foo', 'bar', 'baz']"
-      - "'  foo  ,  bar  ,  baz  ' | o0_o.utils.string2items == ['foo', 'bar', 'baz']"
+      - >-
+        'foo, bar, baz' | o0_o.utils.string2items ==
+        ['foo', 'bar', 'baz']
+      - >-
+        '  foo  ,  bar  ,  baz  ' | o0_o.utils.string2items ==
+        ['foo', 'bar', 'baz']
 
 - name: Test string2items filter with empty string
   ansible.builtin.assert:
@@ -28,21 +32,31 @@
       - "'foo|bar|baz' | o0_o.utils.string2items('|') == ['foo', 'bar', 'baz']"
       - "'foo;bar;baz' | o0_o.utils.string2items(';') == ['foo', 'bar', 'baz']"
       - "'foo bar baz' | o0_o.utils.string2items(' ') == ['foo', 'bar', 'baz']"
-      - "'foo::bar::baz' | o0_o.utils.string2items('::') == ['foo', 'bar', 'baz']"
+      - >-
+        'foo::bar::baz' | o0_o.utils.string2items('::') ==
+        ['foo', 'bar', 'baz']
 
 - name: Test string2items filter with trim parameter
   ansible.builtin.assert:
     that:
-      - "'foo, bar , baz' | o0_o.utils.string2items(',', true) == ['foo', 'bar', 'baz']"
-      - "'foo, bar , baz' | o0_o.utils.string2items(',', false) == ['foo', ' bar ', ' baz']"
+      - >-
+        'foo, bar , baz' | o0_o.utils.string2items(',', true) ==
+        ['foo', 'bar', 'baz']
+      - >-
+        'foo, bar , baz' | o0_o.utils.string2items(',', false) ==
+        ['foo', ' bar ', ' baz']
       - "',foo,bar,' | o0_o.utils.string2items(',', true) == ['foo', 'bar']"
-      - "',foo,bar,' | o0_o.utils.string2items(',', false) == ['', 'foo', 'bar', '']"
+      - >-
+        ',foo,bar,' | o0_o.utils.string2items(',', false) ==
+        ['', 'foo', 'bar', '']
 
 - name: Test string2items filter with empty items
   ansible.builtin.assert:
     that:
       - "'foo,,bar' | o0_o.utils.string2items(',', true) == ['foo', 'bar']"
-      - "'foo,,bar' | o0_o.utils.string2items(',', false) == ['foo', '', 'bar']"
+      - >-
+        'foo,,bar' | o0_o.utils.string2items(',', false) ==
+        ['foo', '', 'bar']
       - "',,,' | o0_o.utils.string2items(',', true) == []"
       - "',,,' | o0_o.utils.string2items(',', false) == ['', '', '', '']"
 
@@ -77,9 +91,15 @@
     tags_string: "production;web;critical"
   ansible.builtin.assert:
     that:
-      - "server_list | o0_o.utils.string2items == ['web01.example.com', 'web02.example.com', 'db01.example.com']"
-      - "path_list | o0_o.utils.string2items(':') == ['/usr/bin', '/usr/local/bin', '/opt/bin']"
-      - "tags_string | o0_o.utils.string2items(';') == ['production', 'web', 'critical']"
+      - >-
+        server_list | o0_o.utils.string2items ==
+        ['web01.example.com', 'web02.example.com', 'db01.example.com']
+      - >-
+        path_list | o0_o.utils.string2items(':') ==
+        ['/usr/bin', '/usr/local/bin', '/opt/bin']
+      - >-
+        tags_string | o0_o.utils.string2items(';') ==
+        ['production', 'web', 'critical']
 
 - name: Test string2items filter with special characters
   ansible.builtin.assert:
@@ -91,7 +111,9 @@
   ansible.builtin.assert:
     that:
       - "'   ,   ,   ' | o0_o.utils.string2items(',', true) == []"
-      - "'   ,   ,   ' | o0_o.utils.string2items(',', false) == ['   ', '   ', '   ']"
+      - >-
+        '   ,   ,   ' | o0_o.utils.string2items(',', false) ==
+        ['   ', '   ', '   ']
 
 - name: Test string2items filter with tab delimiter
   vars:
@@ -105,7 +127,9 @@
     raw_input: " alpha, beta, gamma "
   ansible.builtin.assert:
     that:
-      - "raw_input | o0_o.utils.string2items | map('upper') | list == ['ALPHA', 'BETA', 'GAMMA']"
+      - >-
+        raw_input | o0_o.utils.string2items | map('upper') | list ==
+        ['ALPHA', 'BETA', 'GAMMA']
       - "raw_input | o0_o.utils.string2items | length == 3"
       - "raw_input | o0_o.utils.string2items | first == 'alpha'"
       - "raw_input | o0_o.utils.string2items | last == 'gamma'"

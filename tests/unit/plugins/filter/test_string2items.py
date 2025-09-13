@@ -29,45 +29,50 @@ class TestString2Items:
         """Create FilterModule instance."""
         return FilterModule()
 
-    @pytest.mark.parametrize("value,delimiter,trim,expected", [
-        # Basic comma-separated
-        ("foo,bar,baz", ",", True, ["foo", "bar", "baz"]),
-        # With spaces - trimmed
-        ("foo, bar , baz", ",", True, ["foo", "bar", "baz"]),
-        # With spaces - not trimmed
-        ("foo, bar , baz", ",", False, ["foo", " bar ", " baz"]),
-        # Empty items filtered when trim=True
-        ("foo,,bar", ",", True, ["foo", "bar"]),
-        # Empty items kept when trim=False
-        ("foo,,bar", ",", False, ["foo", "", "bar"]),
-        # Different delimiter
-        ("foo|bar|baz", "|", True, ["foo", "bar", "baz"]),
-        # Semicolon delimiter
-        ("foo;bar;baz", ";", True, ["foo", "bar", "baz"]),
-        # Space delimiter
-        ("foo bar baz", " ", True, ["foo", "bar", "baz"]),
-        # Leading/trailing delimiters with trim
-        (",foo,bar,", ",", True, ["foo", "bar"]),
-        # Leading/trailing delimiters without trim
-        (",foo,bar,", ",", False, ["", "foo", "bar", ""]),
-        # Single item
-        ("foo", ",", True, ["foo"]),
-        # Empty string
-        ("", ",", True, []),
-        ("", ",", False, [""]),
-        # Only delimiters
-        (",,,", ",", True, []),
-        (",,,", ",", False, ["", "", "", ""]),
-        # Spaces only with trim
-        ("  ,  ,  ", ",", True, []),
-        # Numbers get converted to string
-        (123, ",", True, ["123"]),
-        (42, "-", True, ["42"]),
-        # Booleans get converted to string
-        (True, ",", True, ["True"]),
-        (False, ",", True, ["False"]),
-    ])
-    def test_string2items_parametrized(self, filter_module, value, delimiter, trim, expected):
+    @pytest.mark.parametrize(
+        "value,delimiter,trim,expected",
+        [
+            # Basic comma-separated
+            ("foo,bar,baz", ",", True, ["foo", "bar", "baz"]),
+            # With spaces - trimmed
+            ("foo, bar , baz", ",", True, ["foo", "bar", "baz"]),
+            # With spaces - not trimmed
+            ("foo, bar , baz", ",", False, ["foo", " bar ", " baz"]),
+            # Empty items filtered when trim=True
+            ("foo,,bar", ",", True, ["foo", "bar"]),
+            # Empty items kept when trim=False
+            ("foo,,bar", ",", False, ["foo", "", "bar"]),
+            # Different delimiter
+            ("foo|bar|baz", "|", True, ["foo", "bar", "baz"]),
+            # Semicolon delimiter
+            ("foo;bar;baz", ";", True, ["foo", "bar", "baz"]),
+            # Space delimiter
+            ("foo bar baz", " ", True, ["foo", "bar", "baz"]),
+            # Leading/trailing delimiters with trim
+            (",foo,bar,", ",", True, ["foo", "bar"]),
+            # Leading/trailing delimiters without trim
+            (",foo,bar,", ",", False, ["", "foo", "bar", ""]),
+            # Single item
+            ("foo", ",", True, ["foo"]),
+            # Empty string
+            ("", ",", True, []),
+            ("", ",", False, [""]),
+            # Only delimiters
+            (",,,", ",", True, []),
+            (",,,", ",", False, ["", "", "", ""]),
+            # Spaces only with trim
+            ("  ,  ,  ", ",", True, []),
+            # Numbers get converted to string
+            (123, ",", True, ["123"]),
+            (42, "-", True, ["42"]),
+            # Booleans get converted to string
+            (True, ",", True, ["True"]),
+            (False, ",", True, ["False"]),
+        ],
+    )
+    def test_string2items_parametrized(
+        self, filter_module, value, delimiter, trim, expected
+    ):
         """Test string2items with various inputs."""
         result = filter_module.string2items(value, delimiter, trim)
         assert result == expected
@@ -80,13 +85,21 @@ class TestString2Items:
 
     def test_multichar_delimiter(self, filter_module):
         """Test multi-character delimiters."""
-        assert filter_module.string2items("foo::bar::baz", "::", True) == ["foo", "bar", "baz"]
-        assert filter_module.string2items("foo<->bar<->baz", "<->", True) == ["foo", "bar", "baz"]
+        assert filter_module.string2items("foo::bar::baz", "::", True) == [
+            "foo",
+            "bar",
+            "baz",
+        ]
+        assert filter_module.string2items("foo<->bar<->baz", "<->", True) == [
+            "foo",
+            "bar",
+            "baz",
+        ]
 
     def test_non_string_conversions(self, filter_module):
         """Test that various types get converted to strings."""
-        # Lists get converted to string representation, then split by comma
-        # The string representation "['already', 'a', 'list']" contains commas
+        # Lists get converted to string representation, then split by
+        # comma. The string "['already', 'a', 'list']" contains commas
         result = filter_module.string2items(["already", "a", "list"])
         # It will be split on the commas in the string representation
         assert "['already'" in result[0]
@@ -106,11 +119,14 @@ class TestString2Items:
         assert filter_module.string2items(False) == ["False"]
 
     def test_uncastable_error(self, filter_module):
-        """Test that objects that can't be cast to string raise errors."""
+        """Test that uncastable objects raise errors."""
+
         # Create an object that raises an exception when str() is called
         class UnStringable:
             def __str__(self):
                 raise ValueError("Cannot convert to string")
 
-        with pytest.raises(AnsibleFilterError, match="string2items requires a string"):
+        with pytest.raises(
+            AnsibleFilterError, match="string2items requires a string"
+        ):
             filter_module.string2items(UnStringable())

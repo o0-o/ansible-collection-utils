@@ -87,7 +87,9 @@
       gamma: 3
   ansible.builtin.assert:
     that:
-      - "sample_dict.keys() | o0_o.utils.wantlist | sort == ['alpha', 'beta', 'gamma']"
+      - >-
+        sample_dict.keys() | o0_o.utils.wantlist | sort ==
+        ['alpha', 'beta', 'gamma']
       - "sample_dict.values() | o0_o.utils.wantlist | sort == [1, 2, 3]"
 
 - name: Test wantlist filter in practical scenarios
@@ -101,12 +103,16 @@
     that:
       # Ensure we always have a list to iterate over
       - "servers_string | o0_o.utils.wantlist == ['web01.example.com']"
-      - "servers_list | o0_o.utils.wantlist == ['web01.example.com', 'web02.example.com']"
+      - >-
+        servers_list | o0_o.utils.wantlist ==
+        ['web01.example.com', 'web02.example.com']
       - "servers_empty | o0_o.utils.wantlist == []"
       - "servers_none | o0_o.utils.wantlist == []"
       # Get simplified form when we want a single value
       - "servers_string | o0_o.utils.wantlist(false) == 'web01.example.com'"
-      - "servers_list | o0_o.utils.wantlist(false) == ['web01.example.com', 'web02.example.com']"
+      - >-
+        servers_list | o0_o.utils.wantlist(false) ==
+        ['web01.example.com', 'web02.example.com']
       - "servers_empty | o0_o.utils.wantlist(false) == None"
       - "servers_none | o0_o.utils.wantlist(false) == None"
 

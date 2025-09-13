@@ -24,27 +24,33 @@ class FilterModule:
     def filters(self):
         """Return filter functions."""
         return {
-            'string2items': self.string2items,
+            "string2items": self.string2items,
         }
 
-    def string2items(self, value: Any, delimiter: str = ',', trim: bool = True) -> List[str]:
+    def string2items(
+        self, value: Any, delimiter: str = ",", trim: bool = True
+    ) -> List[str]:
         """Convert delimited string to list of items.
 
 
         :param value: The string to split
         :param delimiter: The delimiter to split on (default: comma)
-        :param trim: Whether to strip whitespace from items (default: True)
+        :param trim: Whether to strip whitespace from items (default:
+            True)
         :returns: List of items
-        :raises AnsibleFilterError: If value cannot be converted to string
+        :raises AnsibleFilterError: If value cannot be converted to
+            string
         """
         if not isinstance(value, str):
             # Try to convert to string
             try:
                 value = str(value)
             except (TypeError, ValueError) as e:
-                raise AnsibleFilterError(
-                    f"string2items requires a string or string-castable input, got {type(value).__name__}"
-                ) from e
+                msg = (
+                    f"string2items requires a string or string-castable "
+                    f"input, got {type(value).__name__}"
+                )
+                raise AnsibleFilterError(msg) from e
 
         # Split on delimiter
         items = value.split(delimiter)

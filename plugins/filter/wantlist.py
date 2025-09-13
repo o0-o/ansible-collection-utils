@@ -23,11 +23,12 @@ class FilterModule:
     def filters(self):
         """Return filter functions."""
         return {
-            'wantlist': self.wantlist,
+            "wantlist": self.wantlist,
         }
 
     def wantlist(self, value: Any, want_list: bool = True) -> Any:
-        """Ensure value is a list or return single value based on want_list parameter.
+        """Ensure value is a list or return single value based on
+        want_list parameter.
 
         When want_list=True (default), converts various types to a list:
         - None -> []
@@ -38,7 +39,8 @@ class FilterModule:
         When want_list=False, prefers single values (calls notwantlist)
 
         :param value: The value to process
-        :param want_list: If True, always return a list. If False, prefer single values
+        :param want_list: If True, always return a list. If False,
+            prefer single values
         :returns: The processed value
         """
         # If want_list is False, delegate to notwantlist
