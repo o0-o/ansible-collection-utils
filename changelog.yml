@@ -3,6 +3,20 @@
 ---
 releases:
 
+  v1.3.0:
+    changes:
+      added:
+        - New `string2items` filter for converting delimited strings to lists.
+        - Support for configurable delimiters and optional whitespace trimming.
+        - Automatic conversion of scalar types (numbers, booleans) to strings.
+        - New `wantlist` filter for ensuring values are lists or single values.
+        - Handles None, strings, dicts, and various iterables appropriately.
+        - Includes `want_list` parameter to control output format.
+        - Both filters include comprehensive unit and integration tests.
+      minor_changes:
+        - Added proper handling of dictionaries in wantlist filter to prevent
+          iterating over keys when converting to list.
+
   v1.2.1:
     changes:
       minor_changes:
