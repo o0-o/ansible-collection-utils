@@ -156,6 +156,73 @@ The si filter supports:
 - **Binary mode**: Forces SI prefixes to be interpreted as IEC (GB→GiB)
 - **Optimized output**: Returns simplified format when optimize=true
 
+#### string2items
+
+Converts delimited strings into lists, useful for parsing comma-separated values or other delimited data.
+
+```yaml
+- name: Parse comma-separated string (default)
+  debug:
+    msg: "{{ 'foo,bar,baz' | o0_o.utils.string2items }}"
+  # Returns: ['foo', 'bar', 'baz']
+
+- name: Parse with custom delimiter
+  debug:
+    msg: "{{ '/usr/bin:/usr/local/bin:/opt/bin' | o0_o.utils.string2items(':') }}"
+  # Returns: ['/usr/bin', '/usr/local/bin', '/opt/bin']
+
+- name: Parse with trimming disabled
+  debug:
+    msg: "{{ 'foo, bar , baz' | o0_o.utils.string2items(',', false) }}"
+  # Returns: ['foo', ' bar ', ' baz']
+
+- name: Handles numeric and boolean inputs
+  debug:
+    msg: "{{ 42 | o0_o.utils.string2items }}"
+  # Returns: ['42']
+```
+
+Parameters:
+- `delimiter`: String to split on (default: ',')
+- `trim`: Whether to strip whitespace from items and filter empty items (default: true)
+
+#### wantlist
+
+Ensures values are in list format or simplifies lists to single values based on the `want_list` parameter.
+
+```yaml
+- name: Ensure value is a list (default behavior)
+  debug:
+    msg: "{{ 'single_host' | o0_o.utils.wantlist }}"
+  # Returns: ['single_host']
+
+- name: Handle None values
+  debug:
+    msg: "{{ None | o0_o.utils.wantlist }}"
+  # Returns: []
+
+- name: Simplify single-item lists
+  debug:
+    msg: "{{ ['single_item'] | o0_o.utils.wantlist(false) }}"
+  # Returns: 'single_item'
+
+- name: Simplify empty lists
+  debug:
+    msg: "{{ [] | o0_o.utils.wantlist(false) }}"
+  # Returns: None
+
+- name: Use in loops to handle both strings and lists
+  command: ping {{ item }}
+  loop: "{{ target_hosts | o0_o.utils.wantlist }}"
+  vars:
+    target_hosts: "{{ single_host | default(host_list) }}"
+```
+
+Parameters:
+- `want_list`: If true, always return a list. If false, prefer single values (default: true)
+
+The wantlist filter is particularly useful when dealing with variables that might be either a single value or a list, ensuring consistent behavior in loops and conditionals.
+
 ## Development & Testing
 
 ```bash
