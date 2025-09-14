@@ -121,18 +121,18 @@ class TestWantList:
         assert filter_module.wantlist(None) == []
         assert filter_module.wantlist([1, 2]) == [1, 2]
 
-    def test_notwantlist_directly(self, filter_module):
-        """Test _notwantlist method directly."""
+    def test_notwantlist_behaviour_via_public_api(self, filter_module):
+        """Exercise notwantlist semantics via wantlist(False)."""
         # None -> None
-        assert filter_module._notwantlist(None) is None
+        assert filter_module.wantlist(None, False) is None
         # String -> string
-        assert filter_module._notwantlist("foo") == "foo"
+        assert filter_module.wantlist("foo", False) == "foo"
         # Empty list -> None
-        assert filter_module._notwantlist([]) is None
+        assert filter_module.wantlist([], False) is None
         # Single item list -> item
-        assert filter_module._notwantlist(["bar"]) == "bar"
+        assert filter_module.wantlist(["bar"], False) == "bar"
         # Multiple items -> list
-        assert filter_module._notwantlist([1, 2, 3]) == [1, 2, 3]
+        assert filter_module.wantlist([1, 2, 3], False) == [1, 2, 3]
 
     def test_nested_lists(self, filter_module):
         """Test handling of nested lists."""

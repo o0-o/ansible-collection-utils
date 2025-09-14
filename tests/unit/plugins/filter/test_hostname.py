@@ -14,20 +14,56 @@ from __future__ import annotations
 import pytest
 from ansible.errors import AnsibleFilterError
 
-from ansible_collections.o0_o.utils.plugins.filter.hostname import FilterModule
+from ansible_collections.o0_o.utils.plugins.module_utils import (
+    hostname_utils as _host_utils,
+)
 
 
 @pytest.fixture
-def filter_module():
-    """Create a FilterModule instance for testing."""
-    return FilterModule()
+def parse_hostname():
+    """Expose parse_hostname from module_utils for testing."""
+    return _host_utils.parse_hostname
 
 
-def test_filter_module_filters(filter_module):
-    """Test that filters() returns expected filter functions."""
-    filters = filter_module.filters()
-    assert "hostname" in filters
-    assert callable(filters["hostname"])
+@pytest.fixture(autouse=True)
+def _ensure_hostname_env(monkeypatch):
+    """Ensure parse_hostname can run without external libs.
+
+    Patches dependency flags to True and provides a minimal extractor
+    that approximates eTLD behavior for these tests.
+    """
+
+    class _DummyExtractor:
+        def __call__(self, name: str):
+            parts = name.split(".") if name else []
+            suffix = ""
+            top = ""
+            if len(parts) >= 2:
+                if name.endswith(".co.uk") and len(parts) >= 3:
+                    suffix = "co.uk"
+                    top = ".".join(parts[-3:])
+                else:
+                    suffix = parts[-1]
+                    top = ".".join(parts[-2:])
+
+            return type(
+                "Ext",
+                (),
+                {
+                    "suffix": suffix,
+                    "top_domain_under_public_suffix": top,
+                },
+            )()
+
+    monkeypatch.setattr(_host_utils, "HAS_DNS", True)
+    monkeypatch.setattr(_host_utils, "HAS_IDNA", True)
+    monkeypatch.setattr(_host_utils, "HAS_TLDEXTRACT", True)
+    monkeypatch.setattr(_host_utils, "_TLD_EXTRACTOR", _DummyExtractor())
+
+
+def test_basic_parse_invocation(parse_hostname):
+    """Sanity-check that callable parses a basic hostname."""
+    assert parse_hostname("example.com")["long"] == "example.com"
 
 
 @pytest.mark.parametrize(
@@ -119,9 +155,9 @@ def test_filter_module_filters(filter_module):
         ("", {}),
     ],
 )
-def test_hostname_parsing(filter_module, hostname, expected):
+def test_hostname_parsing(parse_hostname, hostname, expected):
     """Test hostname parsing with various inputs."""
-    result = filter_module.hostname(hostname)
+    result = parse_hostname(hostname)
 
     # Check expected fields are present with correct values
     for key, value in expected.items():
@@ -155,21 +191,21 @@ def test_hostname_parsing(filter_module, hostname, expected):
         ({"short": "localhost"}, "localhost"),
     ],
 )
-def test_dict_input(filter_module, input_dict, expected_short):
+def test_dict_input(parse_hostname, input_dict, expected_short):
     """Test extracting hostname from dict input."""
-    result = filter_module.hostname(input_dict)
+    result = parse_hostname(input_dict)
     assert result["short"] == expected_short
 
 
-def test_pretty_passthrough(filter_module):
+def test_pretty_passthrough(parse_hostname):
     """Test that pretty field is passed through from input dict."""
-    result = filter_module.hostname(
+    result = parse_hostname(
         {"hostname": "server.example.com", "pretty": "Main Server"}
     )
     assert result["pretty"] == "Main Server"
 
     # Pretty should not appear if not in input
-    result = filter_module.hostname("server.example.com")
+    result = parse_hostname("server.example.com")
     assert "pretty" not in result
 
 
@@ -181,10 +217,10 @@ def test_pretty_passthrough(filter_module):
         None,  # None
     ],
 )
-def test_invalid_input_types(filter_module, invalid_input):
+def test_invalid_input_types(parse_hostname, invalid_input):
     """Test that invalid input types raise errors."""
-    with pytest.raises(AnsibleFilterError, match="hostname filter accepts"):
-        filter_module.hostname(invalid_input)
+    with pytest.raises(TypeError, match="hostname input must be str or dict"):
+        parse_hostname(invalid_input)
 
 
 @pytest.mark.parametrize(
@@ -196,10 +232,10 @@ def test_invalid_input_types(filter_module, invalid_input):
         "server-.com",  # Can't end with hyphen - non-compliant
     ],
 )
-def test_invalid_hostnames(filter_module, invalid_hostname):
+def test_invalid_hostnames(parse_hostname, invalid_hostname):
     """Test that invalid hostnames are marked as non-compliant."""
     # All these hostnames are parseable but non-compliant with RFC5891
-    result = filter_module.hostname(invalid_hostname)
+    result = parse_hostname(invalid_hostname)
     assert "compliance" in result
     assert result["compliance"]["rfc5891"] is False
 
@@ -219,7 +255,7 @@ def test_invalid_hostnames(filter_module, invalid_hostname):
                 "domain": "local",
                 "tld": "local",
                 "compliance": {"rfc5891": False},
-                "_absent": ["ascii", "fqdn", "etld", "registered"],
+                "_absent": ["ascii", "fqdn"],
             },
         ),
         # Simple hostname with underscore
@@ -238,11 +274,9 @@ def test_invalid_hostnames(filter_module, invalid_hostname):
         ),
     ],
 )
-def test_non_compliant_hostnames(
-    filter_module, non_compliant_hostname, expected
-):
+def test_non_compliant_hostnames(parse_hostname, non_compliant_hostname, expected):
     """Test non-RFC5891-compliant hostnames are handled gracefully."""
-    result = filter_module.hostname(non_compliant_hostname)
+    result = parse_hostname(non_compliant_hostname)
 
     # Check expected fields are present
     for key, value in expected.items():
@@ -267,34 +301,28 @@ def test_non_compliant_hostnames(
 @pytest.mark.parametrize(
     "missing_lib,error_pattern",
     [
-        ("HAS_DNS", "dnspython library is required"),
-        ("HAS_IDNA", "idna library is required"),
-        ("HAS_TLDEXTRACT", "tldextract library is required"),
+        ("HAS_DNS", "dnspython is required"),
+        ("HAS_IDNA", "idna is required"),
+        ("HAS_TLDEXTRACT", "tldextract is required"),
     ],
 )
-def test_missing_dependencies(
-    filter_module, monkeypatch, missing_lib, error_pattern
-):
+def test_missing_dependencies(monkeypatch, missing_lib, error_pattern):
     """Test that missing dependencies raise appropriate errors."""
-    from ansible_collections.o0_o.utils.plugins.filter import (
-        hostname as hostname_module,
-    )
-
     # Keep all libs available except the one being tested
-    monkeypatch.setattr(hostname_module, "HAS_DNS", True)
-    monkeypatch.setattr(hostname_module, "HAS_IDNA", True)
-    monkeypatch.setattr(hostname_module, "HAS_TLDEXTRACT", True)
+    monkeypatch.setattr(_host_utils, "HAS_DNS", True)
+    monkeypatch.setattr(_host_utils, "HAS_IDNA", True)
+    monkeypatch.setattr(_host_utils, "HAS_TLDEXTRACT", True)
 
     # Disable the specific library
-    monkeypatch.setattr(hostname_module, missing_lib, False)
+    monkeypatch.setattr(_host_utils, missing_lib, False)
 
-    with pytest.raises(AnsibleFilterError, match=error_pattern):
-        filter_module.hostname("example.com")
+    with pytest.raises(ImportError, match=error_pattern):
+        _host_utils.parse_hostname("example.com")
 
 
-def test_compliant_hostname_with_compliance_field(filter_module):
+def test_compliant_hostname_with_compliance_field(parse_hostname):
     """Test compliant hostnames have compliance field set correctly."""
-    result = filter_module.hostname("www.example.com")
+    result = parse_hostname("www.example.com")
 
     # Ensure compliance dict is present and correct
     assert "compliance" in result

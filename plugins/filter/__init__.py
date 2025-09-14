@@ -17,5 +17,16 @@ from ansible_collections.o0_o.utils.plugins.filter.hostname import (
 from ansible_collections.o0_o.utils.plugins.filter.si import (
     FilterModule as SiFilter,
 )
+from ansible_collections.o0_o.utils.plugins.filter.string2items import (
+    FilterModule as String2ItemsFilter,
+)
+from ansible_collections.o0_o.utils.plugins.filter.wantlist import (
+    FilterModule as WantListFilter,
+)
 
-__all__ = ["HostnameFilter", "SiFilter"]
+__all__ = [
+    "HostnameFilter",
+    "SiFilter",
+    "String2ItemsFilter",
+    "WantListFilter",
+]

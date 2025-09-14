@@ -13,53 +13,36 @@
 
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any, Dict, List
 
 from ansible.errors import AnsibleFilterError
+from ansible_collections.o0_o.utils.plugins.module_utils.list_utils import (
+    string2items as _string2items,
+)
 
 
 class FilterModule:
     """Ansible filter plugin."""
 
-    def filters(self):
-        """Return filter functions."""
-        return {
-            "string2items": self.string2items,
-        }
+    def filters(self) -> Dict[str, Any]:
+        """Return available filters for this plugin.
+
+        :returns Dict[str, Any]: Mapping of filter names to callables
+        """
+        return {"string2items": self.string2items}
 
     def string2items(
         self, value: Any, delimiter: str = ",", trim: bool = True
     ) -> List[str]:
-        """Convert delimited string to list of items.
+        """Split a delimited string into a list of items.
 
-
-        :param value: The string to split
-        :param delimiter: The delimiter to split on (default: comma)
-        :param trim: Whether to strip whitespace from items (default:
-            True)
-        :returns: List of items
-        :raises AnsibleFilterError: If value cannot be converted to
-            string
+        :param value: Input value; will be cast to ``str`` when possible
+        :param delimiter: Delimiter to split on (default: ",")
+        :param trim: Strip whitespace; drop empty items when True
+        :returns List[str]: List of items
+        :raises AnsibleFilterError: When input is not string-castable
         """
-        if not isinstance(value, str):
-            # Try to convert to string
-            try:
-                value = str(value)
-            except (TypeError, ValueError) as e:
-                msg = (
-                    f"string2items requires a string or string-castable "
-                    f"input, got {type(value).__name__}"
-                )
-                raise AnsibleFilterError(msg) from e
-
-        # Split on delimiter
-        items = value.split(delimiter)
-
-        if trim:
-            # Strip whitespace and filter out empty items
-            items = [item.strip() for item in items if item.strip()]
-        else:
-            # Keep all items as-is (including empty ones)
-            items = list(items)
-
-        return items
+        try:
+            return _string2items(value, delimiter=delimiter, trim=trim)
+        except Exception as e:
+            raise AnsibleFilterError(str(e))
