@@ -2,6 +2,7 @@
 
 [![GitHub CI](https://github.com/o0-o/ansible-collection-utils/workflows/CI/badge.svg)](https://github.com/o0-o/ansible-collection-utils/actions)
 [![Ansible Galaxy](https://img.shields.io/ansible/collection/v/o0_o/utils.svg?color=brightgreen&label=Ansible%20Galaxy)](https://galaxy.ansible.com/o0_o/utils)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://o0-o.github.io/ansible-collection-utils/)
 
 General utility filters and plugins for Ansible.
 
@@ -222,6 +223,13 @@ Parameters:
 - `want_list`: If true, always return a list. If false, prefer single values (default: true)
 
 The wantlist filter is particularly useful when dealing with variables that might be either a single value or a list, ensuring consistent behavior in loops and conditionals.
+
+## Documentation
+
+- Latest HTML docs: https://o0-o.github.io/ansible-collection-utils/
+- Build locally:
+  - `pip install -r docs/requirements.txt`
+  - `make -C docs html`
 
 ## Development & Testing
 
