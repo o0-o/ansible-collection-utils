@@ -21,6 +21,59 @@ from ansible_collections.o0_o.utils.plugins.module_utils.list_utils import (
 )
 
 
+DOCUMENTATION = r"""
+---
+name: string2items
+short_description: Convert a delimited string into a list of items
+version_added: "1.3.0"
+description:
+  - Splits input into a list using a delimiter.
+  - Can optionally trim whitespace and drop empty items.
+  - Non-string inputs are cast to strings when possible.
+options:
+  _input:
+    description:
+      - The value to split into items.
+    type: raw
+    required: true
+  delimiter:
+    description:
+      - Delimiter to split on.
+    type: str
+    default: ','
+  trim:
+    description:
+      - If true, strip whitespace and drop empty items.
+    type: bool
+    default: true
+author:
+  - oØ.o (@o0-o)
+"""
+
+EXAMPLES = r"""
+- name: Parse comma-separated string
+  ansible.builtin.debug:
+    msg: "{{ 'foo,bar,baz' | o0_o.utils.string2items }}"
+
+- name: Custom delimiter and keep whitespace
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'foo, bar , baz' | o0_o.utils.string2items(',', false) }}
+
+- name: Non-string input gets cast to string
+  ansible.builtin.debug:
+    msg: "{{ 42 | o0_o.utils.string2items }}"
+"""
+
+RETURN = r"""
+_value:
+  description: List of parsed items
+  type: list
+  returned: always
+  sample: [foo, bar, baz]
+"""
+
+
 class FilterModule:
     """Ansible filter plugin."""
 

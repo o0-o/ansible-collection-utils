@@ -21,6 +21,52 @@ from ansible_collections.o0_o.utils.plugins.module_utils.list_utils import (
 )
 
 
+DOCUMENTATION = r"""
+---
+name: wantlist
+short_description: Ensure value is a list or simplify lists
+version_added: "1.3.0"
+description:
+  - When C(want_list=true), wrap values into a list consistently.
+  - When C(want_list=false), reduce to the simplest single value.
+  - Handles C(None), strings, dicts and generic iterables.
+options:
+  _input:
+    description:
+      - Value to convert or simplify.
+    type: raw
+    required: true
+  want_list:
+    description:
+      - If true, always return a list. If false, prefer a single value.
+    type: bool
+    default: true
+author:
+  - oØ.o (@o0-o)
+"""
+
+EXAMPLES = r"""
+- name: Always return a list
+  ansible.builtin.debug:
+    msg: "{{ 'item' | o0_o.utils.wantlist }}"  # -> ['item']
+
+- name: Prefer a single value
+  ansible.builtin.debug:
+    msg: "{{ ['item'] | o0_o.utils.wantlist(false) }}"  # -> 'item'
+
+- name: None handling
+  ansible.builtin.debug:
+    msg: "{{ None | o0_o.utils.wantlist(false) }}"  # -> None
+"""
+
+RETURN = r"""
+_value:
+  description: Resulting value (list or simplified single value)
+  type: raw
+  returned: always
+"""
+
+
 class FilterModule:
     """Ansible filter plugin."""
 
