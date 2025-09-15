@@ -16,7 +16,17 @@ prepare:
 	  --use-current \
 	  --squash-hierarchy \
 	  --dest-dir $(DOCSITE_DIR) \
+	  --index-rst-source index.rst \
 	  o0_o.utils
+	# Append config to exclude generated rst/index.rst from build
+	{ \
+	  echo "# Added by docs/Makefile to reduce warnings"; \
+	  echo "try:"; \
+	  echo "    exclude_patterns = list(exclude_patterns)"; \
+	  echo "except NameError:"; \
+	  echo "    exclude_patterns = []"; \
+	  echo "exclude_patterns.append('rst/index.rst')"; \
+	} >> $(DOCSITE_DIR)/conf.py
 	antsibull-docs collection \
 	  --use-current \
 	  --squash-hierarchy \
