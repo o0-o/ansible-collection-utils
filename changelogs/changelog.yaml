@@ -1,0 +1,13 @@
+ancestor: null
+releases:
+  1.4.0:
+    changes:
+      minor_changes:
+      - Add minimal docstrings to filter methods for consistency.
+      - Refactor filters to import shared logic from module_utils.
+      - Update unit tests to target module_utils directly where appropriate.
+    fragments:
+    - docs_antsibull.yml
+    - docs_ci.yml
+    - module_utils_refactor.yml
+    release_date: '2025-09-14'
