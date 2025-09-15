@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import pytest
-from ansible.errors import AnsibleFilterError
 
 from ansible_collections.o0_o.utils.plugins.module_utils import (
     hostname_utils as _host_utils,
@@ -274,7 +273,9 @@ def test_invalid_hostnames(parse_hostname, invalid_hostname):
         ),
     ],
 )
-def test_non_compliant_hostnames(parse_hostname, non_compliant_hostname, expected):
+def test_non_compliant_hostnames(
+    parse_hostname, non_compliant_hostname, expected
+):
     """Test non-RFC5891-compliant hostnames are handled gracefully."""
     result = parse_hostname(non_compliant_hostname)
 

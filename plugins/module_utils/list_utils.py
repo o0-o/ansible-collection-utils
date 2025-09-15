@@ -16,7 +16,9 @@ from typing import Any, List
 __all__ = ["string2items", "wantlist"]
 
 
-def string2items(value: Any, delimiter: str = ",", trim: bool = True) -> List[str]:
+def string2items(
+    value: Any, delimiter: str = ",", trim: bool = True
+) -> List[str]:
     """Split a delimited string into a list of items.
 
     :param value: Input value; will be cast to ``str`` when possible

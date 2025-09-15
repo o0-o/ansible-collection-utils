@@ -90,9 +90,7 @@ def parse_hostname(data: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
     :raises ValueError: If hostname is invalid
     """
     if not HAS_DNS:
-        raise ImportError(
-            f"dnspython is required: {DNS_IMPORT_ERROR or ''}"
-        )
+        raise ImportError(f"dnspython is required: {DNS_IMPORT_ERROR or ''}")
     if not HAS_IDNA:
         raise ImportError(f"idna is required: {IDNA_IMPORT_ERROR or ''}")
     if not HAS_TLDEXTRACT:
@@ -110,8 +108,13 @@ def parse_hostname(data: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
     rfc5891_compliant = True
     ascii_name = None
     try:
-        ascii_name = idna.encode(hostname_no_dot).decode("ascii")  # type: ignore[name-defined]
-        unicode_name = idna.decode(ascii_name.encode("ascii"))  # type: ignore[name-defined]
+        # IDNA round-trip for strict validation and normalization
+        ascii_name = idna.encode(hostname_no_dot).decode(
+            "ascii"
+        )  # type: ignore[name-defined]
+        unicode_name = idna.decode(
+            ascii_name.encode("ascii")
+        )  # type: ignore[name-defined]
     except Exception:
         rfc5891_compliant = False
         unicode_name = hostname_no_dot

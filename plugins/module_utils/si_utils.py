@@ -83,8 +83,9 @@ def parse_si(
     :param value_str: Input like ``"2400MHz"`` or ``"32GiB"``
     :param binary: Interpret SI prefixes as IEC binary
     :param optimize: Optimize the prefix for pretty display
-    :returns: Dict with canonical base unit key and integer value plus
-        ``pretty`` (e.g., ``{"bytes": 34359738368, "pretty": "32 GiB"}``)
+    :returns: Dict with canonical base unit key and integer value
+        plus ``pretty``
+        (for example: ``{"bytes": 34359738368, "pretty": "32 GiB"}``)
     """
     if not value_str or not isinstance(value_str, str):
         return {}
