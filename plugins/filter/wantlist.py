@@ -16,9 +16,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from ansible.errors import AnsibleFilterError
-from ansible_collections.o0_o.utils.plugins.module_utils.list_utils import (
-    wantlist as _wantlist,
-)
+from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
 
 
 DOCUMENTATION = r"""
@@ -90,6 +88,6 @@ class FilterModule:
         :raises AnsibleFilterError: On unexpected errors
         """
         try:
-            return _wantlist(value, want_list=want_list)
+            return wantlist(value, want_list=want_list)
         except Exception as e:
             raise AnsibleFilterError(str(e))

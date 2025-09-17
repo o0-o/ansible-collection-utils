@@ -14,9 +14,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Union
-from ansible_collections.o0_o.utils.plugins.module_utils import (
-    si_utils as _si_utils,
-)
+from ansible_collections.o0_o.utils.plugins.module_utils import parse_si
 
 
 DOCUMENTATION = r"""
@@ -142,8 +140,6 @@ class FilterModule(object):
             ``pretty`` string
         """
         try:
-            return _si_utils.parse_si(
-                value_str, binary=binary, optimize=optimize
-            )
+            return parse_si(value_str, binary=binary, optimize=optimize)
         except Exception:
             return {}

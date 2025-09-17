@@ -14,9 +14,7 @@ from __future__ import annotations
 from typing import Any, Dict, Union
 
 from ansible.errors import AnsibleFilterError
-from ansible_collections.o0_o.utils.plugins.module_utils import (
-    hostname_utils as _host_utils,
-)
+from ansible_collections.o0_o.utils.plugins.module_utils import parse_hostname
 
 
 DOCUMENTATION = r"""
@@ -133,6 +131,6 @@ class FilterModule:
         :raises AnsibleFilterError: On dependency or validation errors
         """
         try:
-            return _host_utils.parse_hostname(data)
+            return parse_hostname(data)
         except Exception as e:
             raise AnsibleFilterError(str(e))

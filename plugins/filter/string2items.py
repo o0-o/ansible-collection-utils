@@ -16,9 +16,7 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 from ansible.errors import AnsibleFilterError
-from ansible_collections.o0_o.utils.plugins.module_utils.list_utils import (
-    string2items as _string2items,
-)
+from ansible_collections.o0_o.utils.plugins.module_utils import string2items
 
 
 DOCUMENTATION = r"""
@@ -96,6 +94,6 @@ class FilterModule:
         :raises AnsibleFilterError: When input is not string-castable
         """
         try:
-            return _string2items(value, delimiter=delimiter, trim=trim)
+            return string2items(value, delimiter=delimiter, trim=trim)
         except Exception as e:
             raise AnsibleFilterError(str(e))
