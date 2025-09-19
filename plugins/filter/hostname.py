@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any, Dict, Union
 
 from ansible.errors import AnsibleFilterError
+from ansible.module_utils.common.text.converters import to_native
 from ansible_collections.o0_o.utils.plugins.module_utils import parse_hostname
 
 
@@ -117,9 +118,11 @@ class FilterModule:
 
         :returns Dict[str, Any]: Mapping of filter names to callables
         """
-        return {"hostname": self.hostname}
+        return {"hostname": self.hostname_filter}
 
-    def hostname(self, data: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
+    def hostname_filter(
+        self, data: Union[str, Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Parse a hostname into structured components.
 
         Delegates to ``module_utils.hostname_utils.parse_hostname`` and
@@ -133,4 +136,6 @@ class FilterModule:
         try:
             return parse_hostname(data)
         except Exception as e:
-            raise AnsibleFilterError(str(e))
+            raise AnsibleFilterError(
+                f"hostname failed: {type(e).__name__}: {to_native(e)}"
+            ) from e

@@ -87,7 +87,7 @@ jobs:
         run: |
           cd ~/.ansible/collections/ansible_collections/o0_o/utils
           ansible-test integration --venv -v
-  
+
 
   publish:
     name: Publish to Galaxy

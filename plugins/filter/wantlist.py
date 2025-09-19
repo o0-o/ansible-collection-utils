@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from ansible.errors import AnsibleFilterError
+from ansible.module_utils.common.text.converters import to_native
 from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
 
 
@@ -76,9 +77,9 @@ class FilterModule:
 
         :returns Dict[str, Any]: Mapping of filter names to callables
         """
-        return {"wantlist": self.wantlist}
+        return {"wantlist": self.wantlist_filter}
 
-    def wantlist(self, value: Any, want_list: bool = True) -> Any:
+    def wantlist_filter(self, value: Any, want_list: bool = True) -> Any:
         """Proxy to module_utils.wantlist with Ansible error handling.
 
         :param value: Value to process
@@ -90,4 +91,6 @@ class FilterModule:
         try:
             return wantlist(value, want_list=want_list)
         except Exception as e:
-            raise AnsibleFilterError(str(e))
+            raise AnsibleFilterError(
+                f"wantlist failed: {e.__class__.__name__}: {to_native(e)}"
+            ) from e

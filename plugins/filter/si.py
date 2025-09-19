@@ -126,9 +126,9 @@ class FilterModule(object):
 
         :returns Dict[str, Any]: Mapping of filter names to callables
         """
-        return {"si": self.si}
+        return {"si": self.si_filter}
 
-    def si(
+    def si_filter(
         self, value_str: str, binary: bool = False, optimize: bool = True
     ) -> Dict[str, Union[float, str]]:
         """Parse SI/IEC values to base units with pretty formatting.

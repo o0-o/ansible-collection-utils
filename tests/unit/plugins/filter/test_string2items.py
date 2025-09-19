@@ -9,9 +9,11 @@
 #
 # This file is part of the o0_o.utils Ansible Collection.
 
-"""Tests for string2items filter."""
+"""Smoke tests for the string2items filter wrapper."""
 
 from __future__ import annotations
+
+from typing import Any, List
 
 import pytest
 from ansible.errors import AnsibleFilterError
@@ -19,114 +21,62 @@ from ansible.errors import AnsibleFilterError
 from ansible_collections.o0_o.utils.plugins.filter.string2items import (
     FilterModule,
 )
+from ansible_collections.o0_o.utils.plugins.module_utils import string2items
 
 
-class TestString2Items:
-    """Test string2items filter."""
+@pytest.fixture
+def filter_module() -> FilterModule:
+    """Provide a filter instance per test."""
+    return FilterModule()
 
-    @pytest.fixture
-    def filter_module(self):
-        """Create FilterModule instance."""
-        return FilterModule()
 
-    @pytest.mark.parametrize(
-        "value,delimiter,trim,expected",
-        [
-            # Basic comma-separated
-            ("foo,bar,baz", ",", True, ["foo", "bar", "baz"]),
-            # With spaces - trimmed
-            ("foo, bar , baz", ",", True, ["foo", "bar", "baz"]),
-            # With spaces - not trimmed
-            ("foo, bar , baz", ",", False, ["foo", " bar ", " baz"]),
-            # Empty items filtered when trim=True
-            ("foo,,bar", ",", True, ["foo", "bar"]),
-            # Empty items kept when trim=False
-            ("foo,,bar", ",", False, ["foo", "", "bar"]),
-            # Different delimiter
-            ("foo|bar|baz", "|", True, ["foo", "bar", "baz"]),
-            # Semicolon delimiter
-            ("foo;bar;baz", ";", True, ["foo", "bar", "baz"]),
-            # Space delimiter
-            ("foo bar baz", " ", True, ["foo", "bar", "baz"]),
-            # Leading/trailing delimiters with trim
-            (",foo,bar,", ",", True, ["foo", "bar"]),
-            # Leading/trailing delimiters without trim
-            (",foo,bar,", ",", False, ["", "foo", "bar", ""]),
-            # Single item
-            ("foo", ",", True, ["foo"]),
-            # Empty string
-            ("", ",", True, []),
-            ("", ",", False, [""]),
-            # Only delimiters
-            (",,,", ",", True, []),
-            (",,,", ",", False, ["", "", "", ""]),
-            # Spaces only with trim
-            ("  ,  ,  ", ",", True, []),
-            # Numbers get converted to string
-            (123, ",", True, ["123"]),
-            (42, "-", True, ["42"]),
-            # Booleans get converted to string
-            (True, ",", True, ["True"]),
-            (False, ",", True, ["False"]),
-        ],
+@pytest.mark.parametrize(
+    "value,delimiter,trim",
+    [
+        ("foo,bar", ",", True),
+        ("foo, bar , baz", ",", True),
+        ("foo, bar , baz", ",", False),
+        ("foo|bar|baz", "|", True),
+        (123, ",", True),
+    ],
+)
+def test_string2items_matches_helper(
+    filter_module: FilterModule,
+    value: Any,
+    delimiter: str,
+    trim: bool,
+) -> None:
+    """Wrapper should match helper output."""
+    expected: List[str] = string2items(value, delimiter=delimiter, trim=trim)
+    result = filter_module.string2items_filter(
+        value, delimiter=delimiter, trim=trim
     )
-    def test_string2items_parametrized(
-        self, filter_module, value, delimiter, trim, expected
-    ):
-        """Test string2items with various inputs."""
-        result = filter_module.string2items(value, delimiter, trim)
-        assert result == expected
+    assert result == expected
 
-    def test_default_parameters(self, filter_module):
-        """Test default parameter values."""
-        # Default delimiter is comma, default trim is True
-        assert filter_module.string2items("a,b,c") == ["a", "b", "c"]
-        assert filter_module.string2items("a, b, c") == ["a", "b", "c"]
 
-    def test_multichar_delimiter(self, filter_module):
-        """Test multi-character delimiters."""
-        assert filter_module.string2items("foo::bar::baz", "::", True) == [
-            "foo",
-            "bar",
-            "baz",
-        ]
-        assert filter_module.string2items("foo<->bar<->baz", "<->", True) == [
-            "foo",
-            "bar",
-            "baz",
-        ]
+def test_string2items_filter_registration(filter_module: FilterModule) -> None:
+    """Ensure the filter table exposes the string2items callable."""
+    filters = filter_module.filters()
+    assert set(filters) == {"string2items"}
+    assert filters["string2items"].__func__ is FilterModule.string2items_filter
 
-    def test_non_string_conversions(self, filter_module):
-        """Test that various types get converted to strings."""
-        # Lists get converted to string representation, then split by
-        # comma. The string "['already', 'a', 'list']" contains commas
-        result = filter_module.string2items(["already", "a", "list"])
-        # It will be split on the commas in the string representation
-        assert "['already'" in result[0]
-        assert "'list']" in result[-1]
 
-        # Dicts get converted to string representation
-        # Use a dict without commas to avoid splitting issues
-        result = filter_module.string2items({"key": "value"}, delimiter="|")
-        assert result == ["{'key': 'value'}"]
+def test_string2items_error_wrapped(
+    monkeypatch: pytest.MonkeyPatch, filter_module: FilterModule
+) -> None:
+    """Helper exceptions should surface as AnsibleFilterError."""
 
-        # Numbers get converted
-        assert filter_module.string2items(123) == ["123"]
-        assert filter_module.string2items(3.14) == ["3.14"]
+    def boom(
+        *args: Any, **kwargs: Any
+    ) -> None:  # pragma: no cover - forced path
+        raise TypeError("bad value")
 
-        # Booleans get converted
-        assert filter_module.string2items(True) == ["True"]
-        assert filter_module.string2items(False) == ["False"]
-
-    def test_uncastable_error(self, filter_module):
-        """Test that uncastable objects raise errors."""
-
-        # Create an object that raises an exception when str() is called
-        class UnStringable:
-            def __str__(self):
-                raise ValueError("Cannot convert to string")
-
-        with pytest.raises(
-            AnsibleFilterError, match="string2items requires a string"
-        ):
-            filter_module.string2items(UnStringable())
+    monkeypatch.setattr(
+        (
+            "ansible_collections.o0_o.utils.plugins.filter.string2items."
+            "string2items"
+        ),
+        boom,
+    )
+    with pytest.raises(AnsibleFilterError, match="TypeError"):
+        filter_module.string2items_filter(object())

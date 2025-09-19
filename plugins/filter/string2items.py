@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 from ansible.errors import AnsibleFilterError
+from ansible.module_utils.common.text.converters import to_native
 from ansible_collections.o0_o.utils.plugins.module_utils import string2items
 
 
@@ -80,9 +81,9 @@ class FilterModule:
 
         :returns Dict[str, Any]: Mapping of filter names to callables
         """
-        return {"string2items": self.string2items}
+        return {"string2items": self.string2items_filter}
 
-    def string2items(
+    def string2items_filter(
         self, value: Any, delimiter: str = ",", trim: bool = True
     ) -> List[str]:
         """Split a delimited string into a list of items.
@@ -96,4 +97,6 @@ class FilterModule:
         try:
             return string2items(value, delimiter=delimiter, trim=trim)
         except Exception as e:
-            raise AnsibleFilterError(str(e))
+            raise AnsibleFilterError(
+                f"string2items failed: {type(e).__name__}: {to_native(e)}"
+            ) from e
