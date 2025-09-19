@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable, List
+from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 import pytest
 
@@ -69,42 +69,72 @@ def test_string2items_cast_error() -> None:
 
 ValueFactory = Callable[[], Any]
 
+# Helpers wrap callables so pylint does not warn about lambda constants while
+# still allowing parametrised tests to create fresh iterables per invocation.
+
+
+def make_constant(value: Any) -> ValueFactory:
+    """Return a factory that always yields the provided value."""
+
+    def _factory() -> Any:
+        return value
+
+    return _factory
+
+
+def make_generator(limit: int) -> ValueFactory:
+    """Return a factory that creates a fresh range-based generator."""
+
+    def _factory() -> Iterable[int]:
+        return (x for x in range(limit))
+
+    return _factory
+
+
+def make_dict_items(mapping: Dict[str, int]) -> ValueFactory:
+    """Return a factory that exposes dictionary item views."""
+
+    def _factory() -> Iterable[Tuple[str, int]]:
+        return mapping.items()
+
+    return _factory
+
 
 @pytest.mark.parametrize(
     "value_factory,want_list,expected,unordered",
     [
-        (lambda: None, True, [], False),
-        (lambda: "foo", True, ["foo"], False),
-        (lambda: "", True, [""], False),
-        (lambda: ["foo", "bar"], True, ["foo", "bar"], False),
-        (lambda: ("foo", "bar"), True, ["foo", "bar"], False),
-        (lambda: tuple(), True, [], False),
-        (lambda: range(3), True, [0, 1, 2], False),
-        (lambda: (x for x in range(3)), True, [0, 1, 2], False),
-        (lambda: {1, 2, 3}, True, {1, 2, 3}, True),
-        (lambda: set(), True, [], False),
-        (lambda: {"key": "value"}, True, [{"key": "value"}], False),
-        (lambda: {"a": 1, "b": 2}.items(), True, [("a", 1), ("b", 2)], False),
-        (lambda: b"ab", True, [97, 98], False),
-        (lambda: None, False, None, False),
-        (lambda: "foo", False, "foo", False),
-        (lambda: "", False, "", False),
-        (lambda: [], False, None, False),
-        (lambda: ["foo"], False, "foo", False),
-        (lambda: [1, 2], False, [1, 2], False),
-        (lambda: (), False, None, False),
-        (lambda: ("foo",), False, "foo", False),
-        (lambda: ("foo", "bar"), False, ["foo", "bar"], False),
-        (lambda: set(), False, None, False),
-        (lambda: {42}, False, 42, False),
-        (lambda: {1, 2}, False, {1, 2}, True),
-        (lambda: range(0), False, None, False),
-        (lambda: range(1), False, 0, False),
-        (lambda: range(3), False, [0, 1, 2], False),
-        (lambda: (x for x in range(1)), False, 0, False),
-        (lambda: (x for x in range(3)), False, [0, 1, 2], False),
-        (lambda: {"key": "value"}, False, {"key": "value"}, False),
-        (lambda: {"a": 1, "b": 2}.items(), False, [("a", 1), ("b", 2)], False),
+        (make_constant(None), True, [], False),
+        (make_constant("foo"), True, ["foo"], False),
+        (make_constant(""), True, [""], False),
+        (make_constant(["foo", "bar"]), True, ["foo", "bar"], False),
+        (make_constant(("foo", "bar")), True, ["foo", "bar"], False),
+        (make_constant(tuple()), True, [], False),
+        (make_constant(range(3)), True, [0, 1, 2], False),
+        (make_generator(3), True, [0, 1, 2], False),
+        (make_constant({1, 2, 3}), True, {1, 2, 3}, True),
+        (make_constant(set()), True, [], False),
+        (make_constant({"key": "value"}), True, [{"key": "value"}], False),
+        (make_dict_items({"a": 1, "b": 2}), True, [("a", 1), ("b", 2)], False),
+        (make_constant(b"ab"), True, [97, 98], False),
+        (make_constant(None), False, None, False),
+        (make_constant("foo"), False, "foo", False),
+        (make_constant(""), False, "", False),
+        (make_constant([]), False, None, False),
+        (make_constant(["foo"]), False, "foo", False),
+        (make_constant([1, 2]), False, [1, 2], False),
+        (make_constant(()), False, None, False),
+        (make_constant(("foo",)), False, "foo", False),
+        (make_constant(("foo", "bar")), False, ["foo", "bar"], False),
+        (make_constant(set()), False, None, False),
+        (make_constant({42}), False, 42, False),
+        (make_constant({1, 2}), False, {1, 2}, True),
+        (make_constant(range(0)), False, None, False),
+        (make_constant(range(1)), False, 0, False),
+        (make_constant(range(3)), False, [0, 1, 2], False),
+        (make_generator(1), False, 0, False),
+        (make_generator(3), False, [0, 1, 2], False),
+        (make_constant({"key": "value"}), False, {"key": "value"}, False),
+        (make_dict_items({"a": 1, "b": 2}), False, [("a", 1), ("b", 2)], False),
     ],
 )
 def test_wantlist_behaviour(

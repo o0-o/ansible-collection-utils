@@ -1,0 +1,12 @@
+# vim: ts=2:sw=2:sts=2:et:ft=yaml.ansible
+# -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
+---
+minor_changes:
+  - 'Refined utils filter plugins to expose ``*_filter`` callables and surface
+    native error messages when helper utilities fail.'
+  - 'Added focused unit coverage for hostname, list, and SI helper utilities
+    alongside slimmer smoke tests for their filter wrappers.'
+  - 'Refreshed the collection README with consolidated examples and
+    dependency guidance for the filter helpers.'
+  - 'Introduced a GitHub Pages workflow that builds documentation with
+    antsibull-docs generated sources and Sphinx.'
