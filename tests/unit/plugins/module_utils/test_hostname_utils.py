@@ -140,7 +140,7 @@ def test_parse_hostname_dict_inputs(
 
 
 def test_parse_hostname_pretty_passthrough() -> None:
-    """The pretty key should pass through when provided in dict input."""
+    """Pretty key should pass through when present in dict input."""
     result = parse_hostname(
         {"hostname": "server.example.com", "pretty": "Main Server"}
     )
@@ -186,7 +186,7 @@ def test_parse_hostname_empty_string() -> None:
 def test_parse_hostname_non_compliant(
     hostname: str, expected_fields: Dict[str, str]
 ) -> None:
-    """Hostnames with invalid characters should mark compliance false."""
+    """Invalid characters should mark hostnames as non-compliant."""
     result = parse_hostname(hostname)
     for key, val in expected_fields.items():
         assert result[key] == val
@@ -204,7 +204,7 @@ def test_parse_hostname_non_compliant(
 def test_parse_hostname_missing_dependencies(
     monkeypatch: pytest.MonkeyPatch, flag: str, error_snippet: str
 ) -> None:
-    """Missing optional deps should surface helpful ImportError messages."""
+    """Missing optional deps should raise clear ImportError messages."""
     for attr in ("HAS_DNS", "HAS_IDNA", "HAS_TLDEXTRACT"):
         monkeypatch.setattr(host_utils, attr, True)
     monkeypatch.setattr(host_utils, flag, False)

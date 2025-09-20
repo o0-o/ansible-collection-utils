@@ -69,8 +69,8 @@ def test_string2items_cast_error() -> None:
 
 ValueFactory = Callable[[], Any]
 
-# Helpers wrap callables so pylint does not warn about lambda constants while
-# still allowing parametrised tests to create fresh iterables per invocation.
+# Helpers wrap callables to avoid pylint lambda warnings while creating
+# fresh iterables for each parametrised invocation.
 
 
 def make_constant(value: Any) -> ValueFactory:
@@ -134,7 +134,12 @@ def make_dict_items(mapping: Dict[str, int]) -> ValueFactory:
         (make_generator(1), False, 0, False),
         (make_generator(3), False, [0, 1, 2], False),
         (make_constant({"key": "value"}), False, {"key": "value"}, False),
-        (make_dict_items({"a": 1, "b": 2}), False, [("a", 1), ("b", 2)], False),
+        (
+            make_dict_items({"a": 1, "b": 2}),
+            False,
+            [("a", 1), ("b", 2)],
+            False,
+        ),
     ],
 )
 def test_wantlist_behaviour(
