@@ -13,97 +13,84 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import Any
+from typing import Any, Dict
+
+from ansible.errors import AnsibleFilterError
+from ansible.module_utils.common.text.converters import to_native
+from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
+
+
+DOCUMENTATION = r"""
+---
+name: wantlist
+short_description: Ensure value is a list or simplify lists
+version_added: "1.3.0"
+description:
+  - When C(want_list=true), wrap values into a list consistently.
+  - When C(want_list=false), reduce to the simplest single value.
+  - Handles C(None), strings, dicts and generic iterables.
+options:
+  _input:
+    description:
+      - Value to convert or simplify.
+    type: raw
+    required: true
+  want_list:
+    description:
+      - If true, always return a list. If false, prefer a single value.
+    type: bool
+    default: true
+author:
+  - oØ.o (@o0-o)
+"""
+
+EXAMPLES = r"""
+- name: Always return a list
+  ansible.builtin.debug:
+    msg: "{{ 'item' | o0_o.utils.wantlist }}"  # -> ['item']
+
+- name: Prefer a single value
+  ansible.builtin.debug:
+    msg: "{{ ['item'] | o0_o.utils.wantlist(false) }}"  # -> 'item'
+
+- name: None handling
+  ansible.builtin.debug:
+    msg: "{{ None | o0_o.utils.wantlist(false) }}"  # -> None
+"""
+
+RETURN = r"""
+_value:
+  description: Resulting value (list or simplified single value)
+  type: raw
+  returned: always
+"""
 
 
 class FilterModule:
     """Ansible filter plugin."""
 
-    def filters(self):
-        """Return filter functions."""
-        return {
-            "wantlist": self.wantlist,
-        }
+    def filters(self) -> Dict[str, Any]:
+        """Return available filters for this plugin.
 
-    def wantlist(self, value: Any, want_list: bool = True) -> Any:
-        """Ensure value is a list or return single value based on
-        want_list parameter.
+        Wraps the utility to surface errors as AnsibleFilterError for
+        clear reporting in play output.
 
-        When want_list=True (default), converts various types to a list:
-        - None -> []
-        - str -> [str]
-        - Iterable (list, tuple, set, etc.) -> list(iterable)
-        - Any other type -> [value]
+        :returns Dict[str, Any]: Mapping of filter names to callables
+        """
+        return {"wantlist": self.wantlist_filter}
 
-        When want_list=False, prefers single values (calls notwantlist)
+    def wantlist_filter(self, value: Any, want_list: bool = True) -> Any:
+        """Proxy to module_utils.wantlist with Ansible error handling.
 
-        :param value: The value to process
-        :param want_list: If True, always return a list. If False,
+        :param value: Value to process
+        :param bool want_list: If True, always return a list; else
             prefer single values
-        :returns: The processed value
+        :returns: Processed value
+        :raises AnsibleFilterError: On unexpected errors
         """
-        # If want_list is False, delegate to notwantlist
-        if not want_list:
-            return self._notwantlist(value)
-
-        # Handle None - return empty list
-        if value is None:
-            return []
-
-        # Handle strings - wrap in list (don't iterate over chars)
-        if isinstance(value, str):
-            return [value]
-
-        # Handle dicts - wrap in list (don't iterate over keys)
-        if isinstance(value, dict):
-            return [value]
-
-        # Handle iterables - convert to list
-        if isinstance(value, Iterable):
-            return list(value)
-
-        # Any other type - wrap in list
-        return [value]
-
-    def _notwantlist(self, value: Any) -> Any:
-        """Prefer single values over lists where possible.
-
-        Converts values to simplest form:
-        - None -> None
-        - Single item list -> item
-        - Empty list -> None
-        - str -> str
-        - Other iterables with multiple items -> list(iterable)
-        - Any other type -> value
-
-        :param value: The value to process
-        :returns: The processed value in simplest form
-        """
-        # Handle None - return as-is
-        if value is None:
-            return None
-
-        # Handle strings - return as-is
-        if isinstance(value, str):
-            return value
-
-        # Handle dicts - return as-is (don't iterate over keys)
-        if isinstance(value, dict):
-            return value
-
-        # Handle iterables
-        if isinstance(value, Iterable):
-            items = list(value)
-            # Empty iterable (list, set, tuple, etc.) -> None
-            if items == []:
-                return None
-            # Single item -> return the item
-            elif len(items) == 1:
-                return items[0]
-            # Multiple items -> return as list
-            else:
-                return items
-
-        # Any other type - return as-is
-        return value
+        try:
+            return wantlist(value, want_list=want_list)
+        except Exception as e:
+            raise AnsibleFilterError(
+                f"wantlist failed: {e.__class__.__name__}: {to_native(e)}"
+            ) from e

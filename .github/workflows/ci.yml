@@ -12,61 +12,15 @@
 name: CI
 
 'on':
+  pull_request:
   push:
-    branches: [main]
     tags:
       - 'v*.*.*'
-  pull_request:
 
 jobs:
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install ansible-core
-        run: |
-          pip install --upgrade pip
-          pip install ansible-core
-
-      - name: Setup collection structure
-        run: |
-          mkdir -p ~/.ansible/collections/ansible_collections/o0_o
-          cp -r . ~/.ansible/collections/ansible_collections/o0_o/utils
-          cd ~/.ansible/collections/ansible_collections/o0_o/utils
-
-      - name: Install collection dependencies
-        working-directory: >-
-          /home/runner/.ansible/collections/ansible_collections/o0_o/utils
-        run: |
-          . .github/scripts/install-collection-deps.sh
-
-      - name: Run sanity tests
-        working-directory: >-
-          /home/runner/.ansible/collections/ansible_collections/o0_o/utils
-        run: ansible-test sanity --docker -v
-
-      - name: Run unit tests
-        working-directory: >-
-          /home/runner/.ansible/collections/ansible_collections/o0_o/utils
-        run: ansible-test units --docker -v
-
-      - name: Run integration tests
-        working-directory: >-
-          /home/runner/.ansible/collections/ansible_collections/o0_o/utils
-        run: ansible-test integration --docker -v
-
   build:
     name: Build Collection
     runs-on: ubuntu-latest
-    needs: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -78,7 +32,7 @@ jobs:
 
       - name: Install ansible-core
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install ansible-core
 
       - name: Build collection
@@ -87,19 +41,64 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: collection-tarball
+          name: ansible-collection-tarball
           path: '*.tar.gz'
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download built collection
+        uses: actions/download-artifact@v4
+        with:
+          name: ansible-collection-tarball
+          path: ./build
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ansible-core
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core
+
+      - name: Install built collection (with dependencies)
+        run: |
+          ansible-galaxy collection install ./build/o0_o-utils-*.tar.gz \
+            --force -p ~/.ansible/collections -vvv
+
+      - name: Run sanity tests
+        run: |
+          cd ~/.ansible/collections/ansible_collections/o0_o/utils
+          ansible-test sanity --venv -v
+
+      - name: Run unit tests
+        run: |
+          cd ~/.ansible/collections/ansible_collections/o0_o/utils
+          ansible-test units --venv -v
+
+      - name: Run integration tests
+        run: |
+          cd ~/.ansible/collections/ansible_collections/o0_o/utils
+          ansible-test integration --venv -v
+
 
   publish:
     name: Publish to Galaxy
     runs-on: ubuntu-latest
-    needs: build
+    needs: test
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: Download artifact
+      - name: Download built artifact
         uses: actions/download-artifact@v4
         with:
-          name: collection-tarball
+          name: ansible-collection-tarball
 
       - name: Setup Python
         uses: actions/setup-python@v5

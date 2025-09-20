@@ -13,53 +13,90 @@
 
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any, Dict, List
 
 from ansible.errors import AnsibleFilterError
+from ansible.module_utils.common.text.converters import to_native
+from ansible_collections.o0_o.utils.plugins.module_utils import string2items
+
+
+DOCUMENTATION = r"""
+---
+name: string2items
+short_description: Convert a delimited string into a list of items
+version_added: "1.3.0"
+description:
+  - Splits input into a list using a delimiter.
+  - Can optionally trim whitespace and drop empty items.
+  - Non-string inputs are cast to strings when possible.
+options:
+  _input:
+    description:
+      - The value to split into items.
+    type: raw
+    required: true
+  delimiter:
+    description:
+      - Delimiter to split on.
+    type: str
+    default: ','
+  trim:
+    description:
+      - If true, strip whitespace and drop empty items.
+    type: bool
+    default: true
+author:
+  - oØ.o (@o0-o)
+"""
+
+EXAMPLES = r"""
+- name: Parse comma-separated string
+  ansible.builtin.debug:
+    msg: "{{ 'foo,bar,baz' | o0_o.utils.string2items }}"
+
+- name: Custom delimiter and keep whitespace
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'foo, bar , baz' | o0_o.utils.string2items(',', false) }}
+
+- name: Non-string input gets cast to string
+  ansible.builtin.debug:
+    msg: "{{ 42 | o0_o.utils.string2items }}"
+"""
+
+RETURN = r"""
+_value:
+  description: List of parsed items
+  type: list
+  returned: always
+  sample: [foo, bar, baz]
+"""
 
 
 class FilterModule:
     """Ansible filter plugin."""
 
-    def filters(self):
-        """Return filter functions."""
-        return {
-            "string2items": self.string2items,
-        }
+    def filters(self) -> Dict[str, Any]:
+        """Return available filters for this plugin.
 
-    def string2items(
+        :returns Dict[str, Any]: Mapping of filter names to callables
+        """
+        return {"string2items": self.string2items_filter}
+
+    def string2items_filter(
         self, value: Any, delimiter: str = ",", trim: bool = True
     ) -> List[str]:
-        """Convert delimited string to list of items.
+        """Split a delimited string into a list of items.
 
-
-        :param value: The string to split
-        :param delimiter: The delimiter to split on (default: comma)
-        :param trim: Whether to strip whitespace from items (default:
-            True)
-        :returns: List of items
-        :raises AnsibleFilterError: If value cannot be converted to
-            string
+        :param value: Input value; will be cast to ``str`` when possible
+        :param delimiter: Delimiter to split on (default: ",")
+        :param trim: Strip whitespace; drop empty items when True
+        :returns List[str]: List of items
+        :raises AnsibleFilterError: When input is not string-castable
         """
-        if not isinstance(value, str):
-            # Try to convert to string
-            try:
-                value = str(value)
-            except (TypeError, ValueError) as e:
-                msg = (
-                    f"string2items requires a string or string-castable "
-                    f"input, got {type(value).__name__}"
-                )
-                raise AnsibleFilterError(msg) from e
-
-        # Split on delimiter
-        items = value.split(delimiter)
-
-        if trim:
-            # Strip whitespace and filter out empty items
-            items = [item.strip() for item in items if item.strip()]
-        else:
-            # Keep all items as-is (including empty ones)
-            items = list(items)
-
-        return items
+        try:
+            return string2items(value, delimiter=delimiter, trim=trim)
+        except Exception as e:
+            raise AnsibleFilterError(
+                f"string2items failed: {type(e).__name__}: {to_native(e)}"
+            ) from e

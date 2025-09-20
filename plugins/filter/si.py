@@ -13,8 +13,8 @@
 
 from __future__ import annotations
 
-import re
-from typing import Dict, Union
+from typing import Any, Dict, Union
+from ansible_collections.o0_o.utils.plugins.module_utils import parse_si
 
 
 DOCUMENTATION = r"""
@@ -121,222 +121,25 @@ _value:
 class FilterModule(object):
     """Ansible filter plugin for SI unit parsing."""
 
-    # Known base units - normalizes common computing units
-    # Maps abbreviated forms to canonical lowercase keys
-    BASE_UNITS = {
-        # Storage/Memory
-        "b": "bits",
-        "B": "bytes",
-        # Frequency
-        "Hz": "hertz",
-        "hz": "hertz",
-        # Data transfer rates
-        "T/s": "transfers/s",
-        "t/s": "transfers/s",
-        "bps": "bits/s",
-        "b/s": "bits/s",
-        "bit/s": "bits/s",
-        "Bps": "bytes/s",
-        "B/s": "bytes/s",
-        "Byte/s": "bytes/s",
-        "byte/s": "bytes/s",
-        # Power
-        "w": "watts",
-        "W": "watts",
-    }
+    def filters(self) -> Dict[str, Any]:
+        """Return available filters for this plugin.
 
-    # SI (decimal) multipliers - kilo through quetta
-    SI_MULTIPLIERS = {
-        "": 1,
-        "k": 1e3,  # kilo (lowercase)
-        "K": 1e3,  # kilo (uppercase)
-        "M": 1e6,  # mega
-        "G": 1e9,  # giga
-        "T": 1e12,  # tera
-        "P": 1e15,  # peta
-        "E": 1e18,  # exa
-        "Z": 1e21,  # zetta
-        "Y": 1e24,  # yotta
-        "R": 1e27,  # ronna
-        "Q": 1e30,  # quetta
-    }
-
-    # IEC binary prefixes as defined in IEC 60027-2:2000 Amendment 2
-    # (1999). These are the standard binary prefixes for data sizes
-    IEC_MULTIPLIERS = {
-        "": 1,
-        "Ki": 2**10,  # kibi = 1024
-        "Mi": 2**20,  # mebi = 1048576
-        "Gi": 2**30,  # gibi = 1073741824
-        "Ti": 2**40,  # tebi = 1099511627776
-        "Pi": 2**50,  # pebi = 1125899906842624
-        "Ei": 2**60,  # exbi = 1152921504606846976
-        "Zi": 2**70,  # zebi = 1180591620717411303424
-        "Yi": 2**80,  # yobi = 1208925819614629174706176
-    }
-
-    def filters(self):
-        """Return the filter functions.
-
-        :returns: Dictionary mapping filter names to functions
+        :returns Dict[str, Any]: Mapping of filter names to callables
         """
-        return {
-            "si": self.si,
-        }
+        return {"si": self.si_filter}
 
-    def si(
-        self,
-        value_str: str,
-        binary: bool = False,
-        optimize: bool = True,
+    def si_filter(
+        self, value_str: str, binary: bool = False, optimize: bool = True
     ) -> Dict[str, Union[float, str]]:
-        """Parse a value with SI or IEC units and extract the base unit.
+        """Parse SI/IEC values to base units with pretty formatting.
 
-        This function identifies SI prefixes (kilo through quetta) or
-        IEC binary prefixes (kibi through yobi) and extracts the base
-        unit that follows. For example:
-        - "1000MHz" -> {"hz": 1000000000, "pretty": "1000 MHz"}
-        - "2133MT/s" -> {"t/s": 2133000000, "pretty": "2133 MT/s"}
-        - "32GB" -> {"b": 32000000000, "pretty": "32 GB"}
-        - "32GB" with binary=True -> {"b": 34359738368,
-            "pretty": "32 GiB"}
-        - "4GiB" -> {"b": 4294967296, "pretty": "4 GiB"}
-
-        Supports:
-        - SI prefixes from kilo (10^3) to quetta (10^30)
-        - IEC binary prefixes from kibi (2^10) to yobi (2^80)
-
-        :param value_str: String with value and unit ("1000MHz", "32GB")
-        :param binary: If True, treat SI prefixes as binary (GB -> GiB)
-        :param optimize: If True, optimize pretty output; if False, keep
-            original prefix
-        :returns: Dictionary with base unit as key and value in base
-            units
+        :param str value_str: Input like ``"2400MHz"`` or ``"32GiB"``
+        :param bool binary: Interpret SI prefixes as IEC binary
+        :param bool optimize: Choose a human-friendly prefix for output
+        :returns Dict[str, Union[float, str]]: Parsed base units and
+            ``pretty`` string
         """
-        if not value_str or not isinstance(value_str, str):
-            return {}
-
-        # Clean up the input
-        value_str = value_str.strip()
-
-        # Simple pattern to separate number from suffix
-        # Groups: (number) (suffix - everything after number)
-        pattern = r"^([\d.]+)\s*(.*)$"
-        match = re.match(pattern, value_str)
-
-        if not match:
-            return {}
-
         try:
-            number = float(match.group(1))
-            suffix = match.group(2).strip()
-
-            # Parse suffix to extract prefix and base unit
-            prefix = ""
-            base_unit = suffix
-
-            if suffix:
-                # Check for IEC binary prefix (2 chars ending with 'i')
-                if (
-                    len(suffix) >= 2
-                    and suffix[1] == "i"
-                    and suffix[0] in "kKMGTPEZYRQ"
-                ):
-                    prefix = suffix[:2]
-                    base_unit = suffix[2:]
-                # Check for SI decimal prefix (single char)
-                elif suffix[0] in "kKMGTPEZYRQ":
-                    prefix = suffix[0]
-                    base_unit = suffix[1:]
-
-            # If we have a prefix but no base unit, assume bytes
-            if prefix and not base_unit:
-                base_unit = "B"
-
-            # If we have neither prefix nor unit, return empty dict
-            if not prefix and not base_unit:
-                return {}
-
-            # Determine which multiplier to use and track if using IEC
-            using_iec = False
-            if prefix.endswith("i") and len(prefix) == 2:
-                # Explicit IEC binary prefix (e.g., GiB)
-                multiplier = FilterModule.IEC_MULTIPLIERS.get(prefix, 1)
-                display_prefix = prefix
-                using_iec = True
-            elif binary and prefix and not prefix.endswith("i"):
-                # Force binary interpretation of SI prefix
-                # (e.g., GB -> GiB)
-                iec_prefix = prefix + "i" if prefix else ""
-                multiplier = FilterModule.IEC_MULTIPLIERS.get(iec_prefix, 1)
-                display_prefix = iec_prefix
-                using_iec = True
-            else:
-                # Standard SI decimal prefix
-                multiplier = FilterModule.SI_MULTIPLIERS.get(prefix, 1)
-                display_prefix = prefix
-
-            base_value = number * multiplier
-
-            if optimize:
-                # Find the optimal prefix for pretty printing
-                # Use IEC for binary units, SI for others
-                if using_iec or (binary and base_unit.upper() == "B"):
-                    # Use IEC multipliers for binary units
-                    multipliers_to_use = FilterModule.IEC_MULTIPLIERS
-                else:
-                    # Use SI multipliers
-                    multipliers_to_use = FilterModule.SI_MULTIPLIERS
-
-                # Sort multipliers by value to find the best fit
-                sorted_multipliers = sorted(
-                    multipliers_to_use.items(), key=lambda x: x[1]
-                )
-
-                # Find the largest prefix where value >= 1
-                best_prefix = ""
-                best_multiplier = 1
-                for pref, mult in sorted_multipliers:
-                    if base_value >= mult:
-                        best_prefix = pref
-                        best_multiplier = mult
-
-                # Calculate the display value with the best prefix
-                display_value = base_value / best_multiplier
-
-                # Normalize K to lowercase k
-                display_best_prefix = best_prefix
-                if best_prefix == "K":
-                    display_best_prefix = "k"
-            else:
-                # Keep original prefix and value
-                display_value = number
-                display_best_prefix = display_prefix
-                # Still normalize K to lowercase k
-                if display_best_prefix == "K":
-                    display_best_prefix = "k"
-
-            # Format pretty string with 2 decimal places if needed
-            # Check if the value is essentially an integer
-            if abs(display_value - round(display_value)) < 0.01:
-                # Display as integer
-                display_str = str(int(round(display_value)))
-            else:
-                # Round to 2 decimal places and remove trailing zeros
-                display_str = f"{display_value:.2f}".rstrip("0").rstrip(".")
-
-            if display_best_prefix:
-                pretty = f"{display_str} {display_best_prefix}{base_unit}"
-            else:
-                pretty = f"{display_str} {base_unit}"
-
-            # Normalize base unit using our mapping
-            canonical_unit = FilterModule.BASE_UNITS.get(
-                base_unit, base_unit.lower()
-            )
-
-            # Return base_value as int (always in base units like bytes)
-            return {canonical_unit: int(base_value), "pretty": pretty}
-
-        except (ValueError, TypeError):
+            return parse_si(value_str, binary=binary, optimize=optimize)
+        except Exception:
             return {}
