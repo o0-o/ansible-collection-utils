@@ -12,3 +12,7 @@ ignore: |
   tests/output/*
   *.wip
   *.wip/*
+override:
+  changelogs/changelog.yaml:
+    rules:
+      line-length: disable
