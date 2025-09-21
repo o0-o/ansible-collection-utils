@@ -9,10 +9,7 @@ rules:
     allow-non-breakable-words: true
     allow-non-breakable-inline-mappings: true
 ignore: |
+  changelogs/changelog.yaml
   tests/output/*
   *.wip
   *.wip/*
-override:
-  changelogs/changelog.yaml:
-    rules:
-      line-length: disable
