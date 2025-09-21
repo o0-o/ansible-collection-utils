@@ -1,84 +1,89 @@
+---
 ancestor: null
 releases:
   1.0.0:
     changes:
       major_changes:
-      - Initial release featuring the ``hostname`` filter with Unicode/IDN support,
-        component extraction, DNS validation, and extensive testing.
+        - Initial release featuring the ``hostname`` filter with Unicode/IDN
+          support, component extraction, DNS validation, and extensive
+          testing.
   1.0.1:
     changes:
       major_changes:
-      - Added ``__init__.py`` to filter package to enable clean imports.
+        - Added ``__init__.py`` to filter package to enable clean imports.
   1.1.0:
     changes:
       major_changes:
-      - Introduced ``si`` filter supporting SI and IEC prefixes, binary interpretation,
-        and pretty output modes.
+        - Introduced ``si`` filter supporting SI and IEC prefixes, binary
+          interpretation, and pretty output modes.
       minor_changes:
-      - Centralized lint configuration and tidied formatting across the collection.
+        - Centralized lint configuration and tidied formatting across
+          the collection.
   1.1.1:
     changes:
       bugfixes:
-      - Ensured bare numbers without prefixes return empty dicts to preserve legacy
-        behaviour.
+        - Ensured bare numbers without prefixes return empty dicts to
+          preserve legacy behaviour.
       minor_changes:
-      - Documented bare prefix behaviour and added Galaxy/CI badges to the README.
-      - '``si`` filter now treats bare SI/IEC prefixes as bytes for compatibility
-        with common command output.'
+        - Documented bare prefix behaviour and added Galaxy/CI badges
+          to the README.
+        - '``si`` filter now treats bare SI/IEC prefixes as bytes for
+          compatibility with common command output.'
   1.1.2:
     changes:
       minor_changes:
-      - Exported ``SiFilter`` in ``__init__`` for streamlined imports and refreshed
-        README badges and CI install steps.
+        - Exported ``SiFilter`` in ``__init__`` for streamlined imports
+          and refreshed README badges and CI install steps.
   1.2.0:
     changes:
       minor_changes:
-      - ASCII/Punycode results surface only for compliant hostnames and CI-style hostnames
-        with underscores are handled gracefully.
-      - '``hostname`` filter now reports RFC 5891 compliance instead of raising for
-        non-compliant hostnames and exposes compliance metadata.'
+        - ASCII/Punycode results surface only for compliant hostnames
+          and CI-style hostnames with underscores are handled gracefully.
+        - '``hostname`` filter now reports RFC 5891 compliance instead
+          of raising for non-compliant hostnames and exposes compliance
+          metadata.'
   1.2.1:
     changes:
       minor_changes:
-      - Adjusted ``si`` filter output formatting to use consistent decimal precision
-        and trimmed trailing zeros.
+        - Adjusted ``si`` filter output formatting to use consistent decimal
+          precision and trimmed trailing zeros.
   1.3.0:
     changes:
       major_changes:
-      - New ``string2items`` filter for converting delimited strings to lists with
-        configurable delimiters and optional trimming.
-      - New ``wantlist`` filter to coerce values into lists or scalars based on the
-        ``want_list`` parameter.
+        - New ``string2items`` filter for converting delimited strings
+          to lists with configurable delimiters and optional trimming.
+        - New ``wantlist`` filter to coerce values into lists or scalars
+          based on the ``want_list`` parameter.
       minor_changes:
-      - Improved dictionary handling in ``wantlist`` to avoid iterating over keys
-        when normalizing values.
+        - Improved dictionary handling in ``wantlist`` to avoid iterating
+          over keys when normalizing values.
   1.4.0:
     changes:
       minor_changes:
-      - Add minimal docstrings to filter methods for consistency.
-      - Added focused unit coverage for hostname, list, and SI helper utilities alongside
-        slimmer smoke tests for their filter wrappers.
-      - Introduced a GitHub Pages workflow that builds documentation with antsibull-docs
-        generated sources and Sphinx.
-      - Refactor filters to import shared logic from module_utils.
-      - Refined utils filter plugins to expose ``*_filter`` callables and surface
-        native error messages when helper utilities fail.
-      - Refreshed the collection README with consolidated examples and dependency
-        guidance for the filter helpers.
-      - Update unit tests to target module_utils directly where appropriate.
+        - Add minimal docstrings to filter methods for consistency.
+        - Added focused unit coverage for hostname, list, and SI helper
+          utilities alongside slimmer smoke tests for their filter wrappers.
+        - Introduced a GitHub Pages workflow that builds documentation
+          with antsibull-docs generated sources and Sphinx.
+        - Refactor filters to import shared logic from module_utils.
+        - Refined utils filter plugins to expose ``*_filter`` callables
+          and surface native error messages when helper utilities fail.
+        - Refreshed the collection README with consolidated examples and
+          dependency guidance for the filter helpers.
+        - Update unit tests to target module_utils directly where appropriate.
     fragments:
-    - docs_antsibull.yml
-    - docs_ci.yml
-    - filter_wrappers_refactor.yml
-    - module_utils_refactor.yml
+      - docs_antsibull.yml
+      - docs_ci.yml
+      - filter_wrappers_refactor.yml
+      - module_utils_refactor.yml
     release_date: '2025-09-20'
   1.4.1:
     changes:
       minor_changes:
-      - Switched matrix ansible-test runs to use --docker to ensure consistent containerised
-        environments.
-      - Updated CI build job to run black, flake8, yamllint, and a quick ansible-test
-        sanity check before building the collection.
+        - Switched matrix ansible-test runs to use --docker to ensure
+          consistent containerised environments.
+        - Updated CI build job to run black, flake8, yamllint, and a quick
+          ansible-test sanity check before building the collection.
     fragments:
-    - ci_fail_fast.yml
+      - ci_fail_fast.yml
     release_date: '2025-09-21'
