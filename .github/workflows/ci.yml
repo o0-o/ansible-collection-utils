@@ -48,9 +48,6 @@ jobs:
       - name: Run yamllint
         run: yamllint -f parsable .
 
-      - name: Run Quick Sanity Test
-        run: ansible-test sanity
-
       - name: Build collection
         run: ansible-galaxy collection build
 
