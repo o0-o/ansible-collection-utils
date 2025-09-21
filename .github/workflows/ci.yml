@@ -35,6 +35,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install ansible-core
 
+      - name: Install linters
+        run: |
+          pip install yamllint black flake8
+
+      - name: Run black
+        run: black --check --diff --color .
+
+      - name: Run flake8
+        run: flake8 --count --show-source --statistics .
+
+      - name: Run yamllint
+        run: yamllint -f parsable .
+
+      - name: Run Quick Sanity Test
+        run: ansible-test sanity
+
       - name: Build collection
         run: ansible-galaxy collection build
 
@@ -64,8 +80,6 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
 
       - name: Install ansible-core
         run: |
@@ -80,7 +94,7 @@ jobs:
       - name: Run ansible-test ${{ matrix.test_type }}
         run: |
           cd ~/.ansible/collections/ansible_collections/o0_o/utils
-          ansible-test ${{ matrix.test_type }} --venv -v
+          ansible-test ${{ matrix.test_type }} --docker -v
 
 
   publish:

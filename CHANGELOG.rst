@@ -4,6 +4,15 @@ o0\_o.utils Release Notes
 
 .. contents:: Topics
 
+v1.4.1
+======
+
+Minor Changes
+-------------
+
+- Switched matrix ansible-test runs to use --docker to ensure consistent containerised environments.
+- Updated CI build job to run black, flake8, yamllint, and a quick ansible-test sanity check before building the collection.
+
 v1.4.0
 ======
 
