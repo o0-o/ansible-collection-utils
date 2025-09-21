@@ -44,10 +44,14 @@ jobs:
           name: ansible-collection-tarball
           path: '*.tar.gz'
 
-  test:
-    name: Tests
+  tests:
+    name: Run ansible-test ${{ matrix.test_type }}
     runs-on: ubuntu-latest
     needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        test_type: [sanity, units, integration]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -73,26 +77,16 @@ jobs:
           ansible-galaxy collection install ./build/o0_o-utils-*.tar.gz \
             --force -p ~/.ansible/collections -vvv
 
-      - name: Run sanity tests
+      - name: Run ansible-test ${{ matrix.test_type }}
         run: |
           cd ~/.ansible/collections/ansible_collections/o0_o/utils
-          ansible-test sanity --venv -v
-
-      - name: Run unit tests
-        run: |
-          cd ~/.ansible/collections/ansible_collections/o0_o/utils
-          ansible-test units --venv -v
-
-      - name: Run integration tests
-        run: |
-          cd ~/.ansible/collections/ansible_collections/o0_o/utils
-          ansible-test integration --venv -v
+          ansible-test ${{ matrix.test_type }} --venv -v
 
 
   publish:
     name: Publish to Galaxy
     runs-on: ubuntu-latest
-    needs: test
+    needs: tests
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Download built artifact
