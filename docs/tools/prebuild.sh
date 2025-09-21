@@ -38,3 +38,6 @@ antsibull-docs \
     --squash-hierarchy \
     --dest-dir "${GENERATED_DIR}" \
     o0_o.utils
+
+# Drop redundant docsite tree to avoid toctree misreferences.
+rm -rf "${GENERATED_DIR}/docsite"

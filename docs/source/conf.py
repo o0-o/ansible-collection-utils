@@ -37,13 +37,9 @@ html_use_index = False
 html_copy_source = False
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/2/", (None, "../python2.inv")),
-    "python3": ("https://docs.python.org/3/", (None, "../python3.inv")),
-    "jinja2": ("https://jinja.palletsprojects.com/", (None, "../jinja2.inv")),
-    "ansible_devel": (
-        "https://docs.ansible.com/ansible/devel/",
-        (None, "../ansible_devel.inv"),
-    ),
+    "python": ("https://docs.python.org/3/", None),
+    "jinja2": ("https://jinja.palletsprojects.com/en/stable/", None),
+    "ansible_devel": ("https://docs.ansible.com/ansible/devel/", None),
 }
 
 default_role = "any"
@@ -52,5 +48,4 @@ nitpicky = True
 exclude_patterns = [
     "_build",
     "build",
-    "generated/index.rst",
 ]

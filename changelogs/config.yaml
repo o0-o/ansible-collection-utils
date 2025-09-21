@@ -1,8 +1,6 @@
 # vim: ts=2:sw=2:sts=2:et:ft=yaml.ansible
 # -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
 ---
-changelog_filename_template: ../CHANGELOG.rst
-changelog_filename_version_depth: 0
 changes_file: changelog.yaml
 changes_format: combined
 keep_fragments: false
@@ -21,6 +19,9 @@ sections:
   - [security_fixes, Security Fixes]
   - [bugfixes, Bugfixes]
   - [known_issues, Known Issues]
+output:
+  - file: CHANGELOG.rst
+    format: rst
 title: o0_o.utils
 trivial_section_name: trivial
 use_fqcn: true
