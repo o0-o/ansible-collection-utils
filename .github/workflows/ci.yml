@@ -28,7 +28,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.x'
 
       - name: Install ansible-core
         run: |
@@ -66,8 +66,6 @@ jobs:
       matrix:
         test_type: [sanity, units, integration]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Download built collection
         uses: actions/download-artifact@v4
@@ -77,6 +75,8 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
       - name: Install ansible-core
         run: |
@@ -91,7 +91,7 @@ jobs:
       - name: Run ansible-test ${{ matrix.test_type }}
         run: |
           cd ~/.ansible/collections/ansible_collections/o0_o/utils
-          ansible-test ${{ matrix.test_type }} --docker -v
+          ansible-test ${{ matrix.test_type }} --venv -v
 
 
   publish:
