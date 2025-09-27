@@ -5,3 +5,5 @@ minor_changes:
   - Added the `o0_o.utils.truthy_or_integer` filter that prefers integer
     literals while still handling Ansible boolean strings, plus options to
     map zero to false and to require positive integers.
+  - Added the `o0_o.utils.lines2items` filter as a thin wrapper around
+    Python's `splitlines()` for converting multi-line text into lists.
