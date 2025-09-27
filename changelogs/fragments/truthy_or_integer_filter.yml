@@ -11,3 +11,6 @@ minor_changes:
   - Added the `o0_o.utils.items2dict` filter with configurable key/value
     field names, collision behaviour, and optional deep combines via the
     `combine` filter.
+  - Added the `o0_o.utils.dict2items` filter that mirrors the extended
+    behaviour of `items2dict`, including custom field names and
+    collision handling.
