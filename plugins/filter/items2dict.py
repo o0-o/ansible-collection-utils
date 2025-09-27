@@ -61,20 +61,21 @@ options:
       - C(fail) raises an error (default, matching
         C(ansible.builtin.items2dict)).
       - C(list) aggregates duplicate entries into a list.
-      - C(merge) deep-merges duplicate dictionaries via C(combine).
+      - C(combine) deep-merges duplicate dictionaries via the
+        C(combine) filter.
     type: str
     default: fail
-    choices: [fail, list, merge]
-  reverse_merge_order:
+    choices: [fail, list, combine]
+  reverse_combine_order:
     description:
-      - When C(collision=merge), merge newer entries before earlier
+      - When C(collision=combine), merge newer entries before earlier
         ones. Values from earlier entries win if conflicts arise.
     type: bool
     default: false
   combine_args:
     description:
       - Additional keyword arguments forwarded to the underlying
-        C(combine) filter when C(collision=merge).
+        C(combine) filter when C(collision=combine).
       - Keys mirror the arguments supported by C(combine) such as
         C(recursive) or C(list_merge).
     type: dict
@@ -128,8 +129,8 @@ EXAMPLES = r"""
          | o0_o.utils.items2dict(
              key_name='name',
              value_name='options',
-             collision='merge',
-             combine_args={'recursive': True}
+        collision='combine',
+        combine_args={'recursive': True}
          ) }}
   # -> {'foo': {'a': 1, 'b': 2}}
 """
@@ -142,7 +143,7 @@ _value:
 """
 
 
-VALID_COLLISIONS = {"fail", "list", "merge"}
+VALID_COLLISIONS = {"fail", "list", "combine"}
 
 
 class FilterModule:
@@ -158,7 +159,7 @@ class FilterModule:
         key_name: str = "key",
         value_name: Optional[str] = "value",
         collision: str = "fail",
-        reverse_merge_order: bool = False,
+        reverse_combine_order: bool = False,
         combine_args: Optional[Dict[str, Any]] = None,
     ) -> Dict[Any, Any]:
         """Convert list of dictionaries into a dictionary.
@@ -169,7 +170,7 @@ class FilterModule:
         :param Optional[str] value_name: Field providing values or
             C(None) to use the full mapping minus the key field.
         :param str collision: Strategy for duplicate keys.
-        :param bool reverse_merge_order: Reverse order for merge
+        :param bool reverse_combine_order: Reverse order for merge
             strategy.
         :param Optional[Dict[str, Any]] combine_args: Arguments
             forwarded to the combine filter when merging duplicates.
@@ -191,10 +192,10 @@ class FilterModule:
                 "items2dict collision must be one of 'fail', 'list', "
                 "or 'merge'"
             )
-        if reverse_merge_order and collision_mode != "merge":
+        if reverse_combine_order and collision_mode != "combine":
             raise AnsibleFilterError(
-                "items2dict reverse_merge_order is only valid when "
-                "collision='merge'"
+                "items2dict reverse_combine_order is only valid when "
+                "collision='combine'"
             )
 
         combine_kwargs = dict(combine_args or {})
@@ -241,10 +242,10 @@ class FilterModule:
                 existing_list.append(value_payload)
                 continue
 
-            # merge path
+            # combine path
             if not isinstance(value_payload, dict):
                 raise AnsibleFilterError(
-                    "items2dict requires dict values when collision='merge'"
+                    "items2dict requires dict values when collision='combine'"
                 )
             if key_value not in result:
                 result[key_value] = value_payload
@@ -255,7 +256,7 @@ class FilterModule:
                 raise AnsibleFilterError(
                     "items2dict existing value is not a dict; cannot merge"
                 )
-            if reverse_merge_order:
+            if reverse_combine_order:
                 merged = combine(
                     value_payload, existing_value, **combine_kwargs
                 )

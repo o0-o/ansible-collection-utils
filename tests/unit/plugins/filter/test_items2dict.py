@@ -90,14 +90,14 @@ def test_items2dict_collision_merge(filter_module: FilterModule) -> None:
         items,
         key_name="name",
         value_name="options",
-        collision="merge",
+        collision="combine",
         combine_args={"recursive": True},
     )
     assert result == {"foo": {"a": 1, "b": 2, "nested": {"x": 1, "y": 2}}}
 
 
-def test_items2dict_merge_default_order(filter_module: FilterModule) -> None:
-    """Default merge order should let later entries win conflicts."""
+def test_items2dict_combine_default_order(filter_module: FilterModule) -> None:
+    """Default combine order should let later entries win conflicts."""
     items = [
         {"name": "foo", "options": {"value": "late"}},
         {"name": "foo", "options": {"value": "early"}},
@@ -106,13 +106,13 @@ def test_items2dict_merge_default_order(filter_module: FilterModule) -> None:
         items,
         key_name="name",
         value_name="options",
-        collision="merge",
+        collision="combine",
     )
     assert result == {"foo": {"value": "early"}}
 
 
-def test_items2dict_reverse_merge_order(filter_module: FilterModule) -> None:
-    """Reverse merge order should allow earlier entries to win."""
+def test_items2dict_reverse_combine_order(filter_module: FilterModule) -> None:
+    """Reverse combine order should allow earlier entries to win."""
     items = [
         {"name": "foo", "options": {"value": "late"}},
         {"name": "foo", "options": {"value": "early"}},
@@ -121,8 +121,8 @@ def test_items2dict_reverse_merge_order(filter_module: FilterModule) -> None:
         items,
         key_name="name",
         value_name="options",
-        collision="merge",
-        reverse_merge_order=True,
+        collision="combine",
+        reverse_combine_order=True,
     )
     assert result == {"foo": {"value": "late"}}
 
@@ -156,4 +156,4 @@ def test_items2dict_merge_requires_dict_values(
         {"key": "foo", "value": 2},
     ]
     with pytest.raises(AnsibleFilterError, match="requires dict values"):
-        filter_module.items2dict_filter(items, collision="merge")
+        filter_module.items2dict_filter(items, collision="combine")
