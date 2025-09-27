@@ -41,7 +41,9 @@ def test_items2dict_value_none(filter_module: FilterModule) -> None:
         {"name": "foo", "description": "bar"},
         {"name": "baz", "description": ""},
     ]
-    result = filter_module.items2dict_filter(items, key="name", value=None)
+    result = filter_module.items2dict_filter(
+        items, key_name="name", value_name=None
+    )
     assert result == {
         "foo": {"description": "bar"},
         "baz": {"description": ""},
@@ -62,7 +64,10 @@ def test_items2dict_collision_list(filter_module: FilterModule) -> None:
         {"name": "foo", "description": "baz"},
     ]
     result = filter_module.items2dict_filter(
-        items, key="name", value=None, collision="list"
+        items,
+        key_name="name",
+        value_name=None,
+        collision="list",
     )
     assert result == {
         "foo": [
@@ -83,8 +88,8 @@ def test_items2dict_collision_merge(filter_module: FilterModule) -> None:
     ]
     result = filter_module.items2dict_filter(
         items,
-        key="name",
-        value="options",
+        key_name="name",
+        value_name="options",
         collision="merge",
         combine_args={"recursive": True},
     )
@@ -99,8 +104,8 @@ def test_items2dict_merge_default_order(filter_module: FilterModule) -> None:
     ]
     result = filter_module.items2dict_filter(
         items,
-        key="name",
-        value="options",
+        key_name="name",
+        value_name="options",
         collision="merge",
     )
     assert result == {"foo": {"value": "early"}}
@@ -114,8 +119,8 @@ def test_items2dict_reverse_merge_order(filter_module: FilterModule) -> None:
     ]
     result = filter_module.items2dict_filter(
         items,
-        key="name",
-        value="options",
+        key_name="name",
+        value_name="options",
         collision="merge",
         reverse_merge_order=True,
     )
@@ -123,7 +128,7 @@ def test_items2dict_reverse_merge_order(filter_module: FilterModule) -> None:
 
 
 @pytest.mark.parametrize(
-    "items,key,value",
+    "items,key_name,value_name",
     [
         ([{"value": 1}], "key", "value"),
         ([{"key": "foo"}], "key", "value"),
@@ -132,12 +137,14 @@ def test_items2dict_reverse_merge_order(filter_module: FilterModule) -> None:
 def test_items2dict_missing_fields(
     filter_module: FilterModule,
     items: List[Dict[str, Any]],
-    key: str,
-    value: str,
+    key_name: str,
+    value_name: str,
 ) -> None:
     """Missing required fields should raise errors."""
     with pytest.raises(AnsibleFilterError):
-        filter_module.items2dict_filter(items, key=key, value=value)
+        filter_module.items2dict_filter(
+            items, key_name=key_name, value_name=value_name
+        )
 
 
 def test_items2dict_merge_requires_dict_values(

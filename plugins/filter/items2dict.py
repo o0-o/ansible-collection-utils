@@ -43,15 +43,15 @@ options:
     type: list
     elements: dict
     required: true
-  key:
+  key_name:
     description:
       - Field name that provides the resulting dictionary key.
     type: str
     default: key
-  value:
+  value_name:
     description:
       - Field name containing the resulting dictionary value.
-      - Set to C(null) to keep the entire mapping (minus the C(key)
+      - Set to C(null) to keep the entire mapping (minus the C(key_name)
         field) as the value.
     type: str
     default: value
@@ -96,7 +96,12 @@ EXAMPLES = r"""
       {'name': 'baz', 'description': ''},
     ]
   ansible.builtin.debug:
-    msg: "{{ items | o0_o.utils.items2dict(key='name', value=None) }}"
+    msg: >-
+      {{ items
+         | o0_o.utils.items2dict(
+             key_name='name',
+             value_name=None
+         ) }}
   # -> {'foo': {'description': 'bar'}, 'baz': {'description': ''}}
 
 - name: Collect duplicates into a list
@@ -105,7 +110,12 @@ EXAMPLES = r"""
       {{ [
            {'name': 'foo', 'description': 'bar'},
            {'name': 'foo', 'description': 'baz'}
-         ] | o0_o.utils.items2dict(key='name', value=None, collision='list') }}
+         ]
+         | o0_o.utils.items2dict(
+             key_name='name',
+             value_name=None,
+             collision='list'
+         ) }}
   # -> {'foo': [{'description': 'bar'}, {'description': 'baz'}]}
 
 - name: Merge duplicates with combine options
@@ -114,11 +124,12 @@ EXAMPLES = r"""
       {{ [
            {'name': 'foo', 'options': {'a': 1}},
            {'name': 'foo', 'options': {'b': 2}}
-         ] | o0_o.utils.items2dict(
-               key='name',
-               value='options',
-               collision='merge',
-               combine_args={'recursive': True}
+         ]
+         | o0_o.utils.items2dict(
+             key_name='name',
+             value_name='options',
+             collision='merge',
+             combine_args={'recursive': True}
          ) }}
   # -> {'foo': {'a': 1, 'b': 2}}
 """
@@ -144,8 +155,8 @@ class FilterModule:
     def items2dict_filter(
         self,
         items: Iterable[Dict[str, Any]],
-        key: str = "key",
-        value: Optional[str] = "value",
+        key_name: str = "key",
+        value_name: Optional[str] = "value",
         collision: str = "fail",
         reverse_merge_order: bool = False,
         combine_args: Optional[Dict[str, Any]] = None,
@@ -153,9 +164,10 @@ class FilterModule:
         """Convert list of dictionaries into a dictionary.
 
         :param Iterable[Dict[str, Any]] items: Items to convert.
-        :param str key: Field providing each resulting dictionary key.
-        :param Optional[str] value: Field providing values or C(None)
-            to use the full mapping minus the key field.
+        :param str key_name: Field providing each resulting dictionary
+            key.
+        :param Optional[str] value_name: Field providing values or
+            C(None) to use the full mapping minus the key field.
         :param str collision: Strategy for duplicate keys.
         :param bool reverse_merge_order: Reverse order for merge
             strategy.
@@ -164,13 +176,13 @@ class FilterModule:
         :returns Dict[Any, Any]: Constructed dictionary.
         :raises AnsibleFilterError: On invalid input or collisions.
         """
-        if not isinstance(key, str) or not key:
+        if not isinstance(key_name, str) or not key_name:
             raise AnsibleFilterError(
-                "items2dict requires a non-empty string key"
+                "items2dict requires a non-empty string key_name"
             )
-        if value is not None and not isinstance(value, str):
+        if value_name is not None and not isinstance(value_name, str):
             raise AnsibleFilterError(
-                "items2dict 'value' parameter must be a string or None"
+                "items2dict 'value_name' parameter must be a string or None"
             )
 
         collision_mode = (collision or "").lower()
@@ -194,21 +206,25 @@ class FilterModule:
                     "items2dict expects dictionaries; "
                     f"item {index} is {type(item).__name__}"
                 )
-            if key not in item:
+            if key_name not in item:
                 raise AnsibleFilterError(
-                    f"items2dict missing key '{key}' in element {index}"
+                    f"items2dict missing key '{key_name}' in element {index}"
                 )
-            key_value = item[key]
+            key_value = item[key_name]
 
-            if value is None:
-                value_payload = {k: v for k, v in item.items() if k != key}
+            if value_name is None:
+                value_payload = {
+                    item_key: item_value
+                    for item_key, item_value in item.items()
+                    if item_key != key_name
+                }
             else:
-                if value not in item:
+                if value_name not in item:
                     raise AnsibleFilterError(
-                        f"items2dict missing value '{value}' in "
+                        f"items2dict missing value '{value_name}' in "
                         f"element {index}"
                     )
-                value_payload = item[value]
+                value_payload = item[value_name]
 
             if collision_mode == "fail":
                 if key_value in result:
