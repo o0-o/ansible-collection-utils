@@ -13,8 +13,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
-
 import pytest
 from ansible.errors import AnsibleFilterError
 
@@ -50,6 +48,23 @@ def test_items2dict_value_none(filter_module: FilterModule) -> None:
     }
 
 
+def test_items2dict_key_name_list(filter_module: FilterModule) -> None:
+    """Key candidates should fall back to later entries as needed."""
+    items = [
+        {"identifier": "foo", "description": "bar"},
+        {"name": "baz", "description": "baz-desc"},
+    ]
+    result = filter_module.items2dict_filter(
+        items,
+        key_name=["name", "identifier"],
+        value_name=None,
+    )
+    assert result == {
+        "foo": {"description": "bar"},
+        "baz": {"description": "baz-desc"},
+    }
+
+
 def test_items2dict_collision_fail(filter_module: FilterModule) -> None:
     """Duplicate keys should error when collision='fail'."""
     items = [{"key": "foo", "value": 1}, {"key": "foo", "value": 2}]
@@ -77,8 +92,8 @@ def test_items2dict_collision_list(filter_module: FilterModule) -> None:
     }
 
 
-def test_items2dict_collision_merge(filter_module: FilterModule) -> None:
-    """Merge collisions should deep merge dictionaries via combine."""
+def test_items2dict_collision_combine(filter_module: FilterModule) -> None:
+    """Combine collisions should deep merge dictionaries via combine."""
     items = [
         {"name": "foo", "options": {"a": 1, "nested": {"x": 1}}},
         {
@@ -127,30 +142,59 @@ def test_items2dict_reverse_combine_order(filter_module: FilterModule) -> None:
     assert result == {"foo": {"value": "late"}}
 
 
-@pytest.mark.parametrize(
-    "items,key_name,value_name",
-    [
-        ([{"value": 1}], "key", "value"),
-        ([{"key": "foo"}], "key", "value"),
-    ],
-)
-def test_items2dict_missing_fields(
+def test_items2dict_skip_missing_key(filter_module: FilterModule) -> None:
+    """Items without keys are skipped when enabled."""
+    items = [
+        {"description": "bar"},
+        {"name": "ok", "description": "baz"},
+    ]
+    result = filter_module.items2dict_filter(
+        items,
+        key_name=["name", "identifier"],
+        value_name=None,
+        skip_missing_key=True,
+    )
+    assert result == {"ok": {"description": "baz"}}
+
+
+def test_items2dict_default_value_used(filter_module: FilterModule) -> None:
+    """Missing values should fall back to the provided default."""
+    items = [{"key": "foo"}]
+    result = filter_module.items2dict_filter(
+        items,
+        default_value="fallback",
+    )
+    assert result == {"foo": "fallback"}
+
+
+def test_items2dict_default_value_for_empty_dict(
     filter_module: FilterModule,
-    items: List[Dict[str, Any]],
-    key_name: str,
-    value_name: str,
 ) -> None:
-    """Missing required fields should raise errors."""
+    """Empty dictionaries trigger default when allow_empty is false."""
+    items = [{"key": "foo", "value": {}}]
+    result = filter_module.items2dict_filter(
+        items,
+        default_value={"from": "default"},
+        allow_empty=False,
+        collision="combine",
+    )
+    assert result == {"foo": {"from": "default"}}
+
+
+def test_items2dict_missing_key_raises(filter_module: FilterModule) -> None:
+    """Missing key candidates should raise an error."""
     with pytest.raises(AnsibleFilterError):
         filter_module.items2dict_filter(
-            items, key_name=key_name, value_name=value_name
+            [{"value": 1}],
+            key_name="key",
+            value_name="value",
         )
 
 
-def test_items2dict_merge_requires_dict_values(
+def test_items2dict_combine_requires_dict_values(
     filter_module: FilterModule,
 ) -> None:
-    """Merge strategy should ensure values are dictionaries."""
+    """Combine strategy should ensure values are dictionaries."""
     items = [
         {"key": "foo", "value": 1},
         {"key": "foo", "value": 2},

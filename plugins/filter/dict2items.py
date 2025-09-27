@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Any, Dict, Iterable, List, Optional
 
 from ansible.errors import AnsibleFilterError
+from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
 
 DOCUMENTATION = r"""
 ---
@@ -37,6 +38,8 @@ options:
   key_name:
     description:
       - Field name assigned the dictionary key in each resulting item.
+      - Accepts a list of field names; the first available entry will be
+        used.
     type: str
     default: key
   value_name:
@@ -57,6 +60,24 @@ options:
     type: str
     default: fail
     choices: [fail, list, combine]
+  default_value:
+    description:
+      - Value to use when a mapping value is missing or considered empty
+        (subject to C(allow_empty)).
+    type: raw
+    default: null
+  allow_empty:
+    description:
+      - When C(false), treat empty dictionaries as missing values and
+        use C(default_value) instead.
+    type: bool
+    default: true
+  skip_missing_key:
+    description:
+      - When C(true), skip entries that cannot be assigned to any of the
+        key candidates instead of raising an error.
+    type: bool
+    default: false
 author:
   - oØ.o (@o0-o)
 """
@@ -125,26 +146,42 @@ class FilterModule:
     def dict2items_filter(
         self,
         mapping: Dict[Any, Any],
-        key_name: str = "key",
+        key_name: Any = "key",
         value_name: Optional[str] = "value",
         collision: str = "fail",
+        default_value: Any = None,
+        allow_empty: bool = True,
+        skip_missing_key: bool = False,
     ) -> List[Dict[str, Any]]:
         """Convert dictionaries into list representations.
 
         :param Dict[Any, Any] mapping: Mapping to convert.
-        :param str key_name: Field name for each item's key value.
+        :param Any key_name: Field name(s) for each item's key value.
         :param Optional[str] value_name: Field name for the value, or
             C(None) to inline mapping values.
         :param str collision: Strategy for aggregated values.
+        :param Any default_value: Fallback when mapping values are
+            missing or empty.
+        :param bool allow_empty: Whether empty dictionaries are treated
+            as valid values.
+        :param bool skip_missing_key: Skip entries lacking key fields if
+            true.
         :returns List[Dict[str, Any]]: List of item dictionaries.
         :raises AnsibleFilterError: On invalid input or configuration.
         """
         if not isinstance(mapping, dict):
             raise AnsibleFilterError("dict2items requires a dictionary input")
-        if not isinstance(key_name, str) or not key_name:
+
+        key_candidates = wantlist(key_name, want_list=True)
+        if not key_candidates:
             raise AnsibleFilterError(
-                "dict2items requires a non-empty string key_name"
+                "dict2items requires at least one key_name candidate"
             )
+        for candidate in key_candidates:
+            if not isinstance(candidate, str) or not candidate:
+                raise AnsibleFilterError(
+                    "dict2items key_name entries must be non-empty strings"
+                )
         if value_name is not None and not isinstance(value_name, str):
             raise AnsibleFilterError(
                 "dict2items 'value_name' parameter must be a string or None"
@@ -161,56 +198,111 @@ class FilterModule:
         for key, value in mapping.items():
             if collision_mode == "list":
                 items.extend(
-                    self._expand_list_value(key, value, key_name, value_name)
+                    self._expand_list_value(
+                        key,
+                        value,
+                        key_candidates,
+                        value_name,
+                        default_value,
+                        allow_empty,
+                        skip_missing_key,
+                    )
                 )
                 continue
 
-            items.append(
-                self._make_item(
-                    key=key,
-                    value=value,
-                    key_name=key_name,
-                    value_name=value_name,
-                    require_mapping=value_name is None,
-                )
+            item = self._build_single_item(
+                key=key,
+                value=value,
+                key_candidates=key_candidates,
+                value_name=value_name,
+                default_value=default_value,
+                allow_empty=allow_empty,
+                skip_missing_key=skip_missing_key,
             )
+            if item is not None:
+                items.append(item)
 
         return items
 
     @staticmethod
-    def _make_item(
+    def _is_empty_mapping(value: Any) -> bool:
+        return isinstance(value, dict) and not value
+
+    def _build_single_item(
+        self,
+        *,
         key: Any,
         value: Any,
-        *,
-        key_name: str,
+        key_candidates: List[str],
         value_name: Optional[str],
-        require_mapping: bool,
-    ) -> Dict[str, Any]:
-        """Construct a single output item."""
+        default_value: Any,
+        allow_empty: bool,
+        skip_missing_key: bool,
+    ) -> Optional[Dict[str, Any]]:
+        """Construct a single output item or return None to skip."""
         if value_name is None:
-            if not isinstance(value, dict):
+            processed_value = value
+            if processed_value is None or (
+                self._is_empty_mapping(processed_value) and not allow_empty
+            ):
+                processed_value = default_value
+            if processed_value is None:
+                if skip_missing_key:
+                    return None
+            if processed_value is None or not isinstance(
+                processed_value, dict
+            ):
+                if skip_missing_key:
+                    return None
                 raise AnsibleFilterError(
                     "dict2items requires dict values when value_name is None"
                 )
-            item = value.copy()
-            if key_name in item:
-                raise AnsibleFilterError(
-                    f"dict2items value already contains '{key_name}' field"
-                )
-            item[key_name] = key
-            return item
 
-        return {key_name: key, value_name: value}
+            value_dict = processed_value.copy()
+            key_field = self._select_output_key_field(
+                key_candidates, value_dict, key, skip_missing_key
+            )
+            if key_field is None:
+                return None
+            existing = value_dict.get(key_field)
+            if existing not in (None, key):
+                if skip_missing_key:
+                    return None
+                raise AnsibleFilterError(
+                    f"dict2items cannot assign key '{key_field}'="
+                    f"{key!r}; existing value {existing!r} conflicts"
+                )
+            value_dict[key_field] = key
+            return value_dict
+
+        processed_value = value
+        if processed_value is None or (
+            self._is_empty_mapping(processed_value) and not allow_empty
+        ):
+            processed_value = default_value
+        if (
+            isinstance(processed_value, dict)
+            and processed_value is default_value
+        ):
+            processed_value = processed_value.copy()
+
+        key_field = key_candidates[0]
+        return {key_field: key, value_name: processed_value}
 
     def _expand_list_value(
         self,
         key: Any,
         value: Any,
-        key_name: str,
+        key_candidates: List[str],
         value_name: Optional[str],
+        default_value: Any,
+        allow_empty: bool,
+        skip_missing_key: bool,
     ) -> Iterable[Dict[str, Any]]:
         """Expand list values into multiple items."""
         if not isinstance(value, list):
+            if skip_missing_key:
+                return []
             raise AnsibleFilterError(
                 "dict2items collision='list' expects list values"
             )
@@ -218,16 +310,46 @@ class FilterModule:
         expanded: List[Dict[str, Any]] = []
         for index, element in enumerate(value):
             try:
-                item = self._make_item(
+                item = self._build_single_item(
                     key=key,
                     value=element,
-                    key_name=key_name,
+                    key_candidates=key_candidates,
                     value_name=value_name,
-                    require_mapping=value_name is None,
+                    default_value=default_value,
+                    allow_empty=allow_empty,
+                    skip_missing_key=skip_missing_key,
                 )
             except AnsibleFilterError as exc:
                 raise AnsibleFilterError(
                     f"dict2items list element {index}: {exc}"
                 ) from exc
-            expanded.append(item)
+            if item is not None:
+                expanded.append(item)
         return expanded
+
+    @staticmethod
+    def _select_output_key_field(
+        key_candidates: List[str],
+        value_dict: Optional[Dict[str, Any]],
+        key: Any,
+        skip_missing_key: bool,
+    ) -> Optional[str]:
+        """Choose the field used to store the key in output items."""
+        if value_dict is None:
+            return key_candidates[0]
+
+        for candidate in key_candidates:
+            if candidate not in value_dict:
+                return candidate
+        for candidate in key_candidates:
+            if value_dict.get(candidate) == key:
+                return candidate
+
+        if skip_missing_key:
+            return None
+
+        candidates_display = ", ".join(key_candidates)
+        raise AnsibleFilterError(
+            "dict2items could not determine output key field; "
+            f"checked: {candidates_display}"
+        )

@@ -52,6 +52,17 @@ def test_dict2items_value_name_none(filter_module: FilterModule) -> None:
     ]
 
 
+def test_dict2items_key_name_candidates(filter_module: FilterModule) -> None:
+    """Key candidates should select the first applicable entry."""
+    mapping = {"foo": {"description": "bar"}}
+    result = filter_module.dict2items_filter(
+        mapping,
+        key_name=["name", "identifier"],
+        value_name=None,
+    )
+    assert result == [{"name": "foo", "description": "bar"}]
+
+
 def test_dict2items_collision_list(filter_module: FilterModule) -> None:
     """List collision should expand list values into multiple items."""
     mapping = {
@@ -104,6 +115,44 @@ def test_dict2items_value_name_none_requires_dict(
     mapping = {"foo": "bar"}
     with pytest.raises(AnsibleFilterError, match="dict values"):
         filter_module.dict2items_filter(mapping, value_name=None)
+
+
+def test_dict2items_skip_missing_key(filter_module: FilterModule) -> None:
+    """Entries with invalid structures can be skipped."""
+    mapping = {
+        "foo": "bar",
+        "baz": {"description": "ok"},
+    }
+    result = filter_module.dict2items_filter(
+        mapping,
+        value_name=None,
+        skip_missing_key=True,
+    )
+    assert result == [{"key": "baz", "description": "ok"}]
+
+
+def test_dict2items_default_value(filter_module: FilterModule) -> None:
+    """Default value should apply when values are missing."""
+    mapping = {"foo": None}
+    result = filter_module.dict2items_filter(
+        mapping,
+        default_value="fallback",
+    )
+    assert result == [{"key": "foo", "value": "fallback"}]
+
+
+def test_dict2items_default_value_allow_empty(
+    filter_module: FilterModule,
+) -> None:
+    """Empty dicts honour allow_empty toggle."""
+    mapping = {"foo": {}}
+    result = filter_module.dict2items_filter(
+        mapping,
+        value_name=None,
+        allow_empty=False,
+        default_value={"description": "default"},
+    )
+    assert result == [{"key": "foo", "description": "default"}]
 
 
 def test_dict2items_round_trip_list_collision(

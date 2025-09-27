@@ -25,6 +25,8 @@ except ImportError as exc:  # pragma: no cover - defensive guard
         "items2dict requires the core combine filter: " f"{to_native(exc)}"
     )
 
+from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
+
 
 DOCUMENTATION = r"""
 ---
@@ -34,7 +36,7 @@ version_added: "1.5.0"
 description:
   - Generalisation of C(ansible.builtin.items2dict) that allows custom
     key/value field names, full-record values, and collision strategies.
-  - Supports optional deep merges via C(collision=merge) using the
+  - Supports optional deep merges via C(collision=combine) using the
     C(combine) filter with its standard arguments.
 options:
   _input:
@@ -46,6 +48,7 @@ options:
   key_name:
     description:
       - Field name that provides the resulting dictionary key.
+      - Accepts a list of field names; the first match found will be used.
     type: str
     default: key
   value_name:
@@ -80,6 +83,24 @@ options:
         C(recursive) or C(list_merge).
     type: dict
     default: {}
+  default_value:
+    description:
+      - Value to use when the selected value field is missing or empty
+        (subject to C(allow_empty)).
+    type: raw
+    default: null
+  allow_empty:
+    description:
+      - When C(false), treat empty dictionaries as missing values and
+        substitute C(default_value).
+    type: bool
+    default: true
+  skip_missing_key:
+    description:
+      - When C(true), skip items that lack all candidate key fields
+        instead of raising an error.
+    type: bool
+    default: false
 author:
   - oØ.o (@o0-o)
 """
@@ -156,16 +177,19 @@ class FilterModule:
     def items2dict_filter(
         self,
         items: Iterable[Dict[str, Any]],
-        key_name: str = "key",
+        key_name: Any = "key",
         value_name: Optional[str] = "value",
         collision: str = "fail",
         reverse_combine_order: bool = False,
         combine_args: Optional[Dict[str, Any]] = None,
+        default_value: Any = None,
+        allow_empty: bool = True,
+        skip_missing_key: bool = False,
     ) -> Dict[Any, Any]:
         """Convert list of dictionaries into a dictionary.
 
         :param Iterable[Dict[str, Any]] items: Items to convert.
-        :param str key_name: Field providing each resulting dictionary
+        :param Any key_name: Field providing each resulting dictionary
             key.
         :param Optional[str] value_name: Field providing values or
             C(None) to use the full mapping minus the key field.
@@ -174,13 +198,25 @@ class FilterModule:
             strategy.
         :param Optional[Dict[str, Any]] combine_args: Arguments
             forwarded to the combine filter when merging duplicates.
+        :param Any default_value: Fallback value when value field is
+            missing or empty.
+        :param bool allow_empty: Whether empty dictionaries are treated
+            as valid values.
+        :param bool skip_missing_key: Skip items missing key fields if
+            true, otherwise raise an error.
         :returns Dict[Any, Any]: Constructed dictionary.
         :raises AnsibleFilterError: On invalid input or collisions.
         """
-        if not isinstance(key_name, str) or not key_name:
+        key_candidates = wantlist(key_name, want_list=True)
+        if not key_candidates:
             raise AnsibleFilterError(
-                "items2dict requires a non-empty string key_name"
+                "items2dict requires at least one key_name candidate"
             )
+        for candidate in key_candidates:
+            if not isinstance(candidate, str) or not candidate:
+                raise AnsibleFilterError(
+                    "items2dict key_name entries must be non-empty strings"
+                )
         if value_name is not None and not isinstance(value_name, str):
             raise AnsibleFilterError(
                 "items2dict 'value_name' parameter must be a string or None"
@@ -190,7 +226,7 @@ class FilterModule:
         if collision_mode not in VALID_COLLISIONS:
             raise AnsibleFilterError(
                 "items2dict collision must be one of 'fail', 'list', "
-                "or 'merge'"
+                "or 'combine'"
             )
         if reverse_combine_order and collision_mode != "combine":
             raise AnsibleFilterError(
@@ -207,25 +243,58 @@ class FilterModule:
                     "items2dict expects dictionaries; "
                     f"item {index} is {type(item).__name__}"
                 )
-            if key_name not in item:
+            key_field = None
+            for candidate in key_candidates:
+                if candidate in item:
+                    key_field = candidate
+                    break
+            if key_field is None:
+                if skip_missing_key:
+                    continue
+                candidates_display = ", ".join(key_candidates)
                 raise AnsibleFilterError(
-                    f"items2dict missing key '{key_name}' in element {index}"
+                    f"items2dict element {index} missing key candidates: "
+                    f"{candidates_display}"
                 )
-            key_value = item[key_name]
+            key_value = item[key_field]
 
             if value_name is None:
                 value_payload = {
-                    item_key: item_value
-                    for item_key, item_value in item.items()
-                    if item_key != key_name
+                    field: value
+                    for field, value in item.items()
+                    if field != key_field
                 }
+                if (
+                    not allow_empty
+                    and isinstance(value_payload, dict)
+                    and not value_payload
+                ):
+                    value_payload = default_value
+                if value_payload is None and default_value is not None:
+                    value_payload = default_value
+                if (
+                    isinstance(value_payload, dict)
+                    and value_payload is default_value
+                ):
+                    value_payload = value_payload.copy()
             else:
-                if value_name not in item:
-                    raise AnsibleFilterError(
-                        f"items2dict missing value '{value_name}' in "
-                        f"element {index}"
-                    )
-                value_payload = item[value_name]
+                value_missing = value_name not in item
+                if not value_missing:
+                    candidate_value = item[value_name]
+                    if (
+                        not allow_empty
+                        and isinstance(candidate_value, dict)
+                        and not candidate_value
+                    ):
+                        value_missing = True
+                value_payload = (
+                    default_value if value_missing else item[value_name]
+                )
+                if (
+                    isinstance(value_payload, dict)
+                    and value_payload is default_value
+                ):
+                    value_payload = value_payload.copy()
 
             if collision_mode == "fail":
                 if key_value in result:

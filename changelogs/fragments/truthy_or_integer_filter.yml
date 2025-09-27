@@ -9,8 +9,8 @@ minor_changes:
     Python's `splitlines()` for converting multi-line text into lists,
     with a `splitlines` alias for familiarity.
   - Added the `o0_o.utils.items2dict` filter with configurable key/value
-    field names, collision behaviour, and optional deep combines via the
-    `combine` filter.
+    field names (including key fallbacks), collision behaviour, default
+    values, and optional deep combines via the `combine` filter.
   - Added the `o0_o.utils.dict2items` filter that mirrors the extended
-    behaviour of `items2dict`, including custom field names and
-    collision handling.
+    behaviour of `items2dict`, supporting the same key fallback logic,
+    default values, and collision handling.
