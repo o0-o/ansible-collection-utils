@@ -23,10 +23,14 @@ from ansible_collections.o0_o.utils.plugins.module_utils.list_utils import (  # 
 from ansible_collections.o0_o.utils.plugins.module_utils.si_utils import (  # noqa: E501
     parse_si,
 )
+from ansible_collections.o0_o.utils.plugins.module_utils.truthy_utils import (  # noqa: E501
+    truthy_or_integer,
+)
 
 __all__ = [
     "parse_hostname",
     "string2items",
     "wantlist",
     "parse_si",
+    "truthy_or_integer",
 ]

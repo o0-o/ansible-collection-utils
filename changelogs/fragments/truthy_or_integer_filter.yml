@@ -1,0 +1,7 @@
+# vim: ts=2:sw=2:sts=2:et:ft=yaml.ansible
+# -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
+---
+minor_changes:
+  - Added the `o0_o.utils.truthy_or_integer` filter that prefers integer
+    literals while still handling Ansible boolean strings, plus options to
+    map zero to false and to require positive integers.
