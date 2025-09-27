@@ -8,3 +8,6 @@ minor_changes:
   - Added the `o0_o.utils.lines2items` filter as a thin wrapper around
     Python's `splitlines()` for converting multi-line text into lists,
     with a `splitlines` alias for familiarity.
+  - Added the `o0_o.utils.items2dict` filter with configurable key/value
+    field names, collision behaviour, and optional deep merges via the
+    `combine` filter.
