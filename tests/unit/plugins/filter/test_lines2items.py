@@ -50,10 +50,22 @@ def test_lines2items_splits_expectedly(
 
 
 def test_lines2items_registration(filter_module: FilterModule) -> None:
-    """Ensure the filter is registered under its public name."""
+    """Ensure the filter is registered under its public names."""
     filters = filter_module.filters()
-    assert set(filters) == {"lines2items"}
-    assert filters["lines2items"].__func__ is FilterModule.lines2items_filter
+    assert set(filters) == {"lines2items", "splitlines"}
+    for name in ("lines2items", "splitlines"):
+        assert filters[name].__func__ is FilterModule.lines2items_filter
+
+
+def test_splitlines_alias_behaves_like_primary(
+    filter_module: FilterModule,
+) -> None:
+    """Alias should mirror the primary implementation."""
+    filters = filter_module.filters()
+    primary = filters["lines2items"]
+    alias = filters["splitlines"]
+    text = "first\nsecond"
+    assert alias(text) == primary(text)
 
 
 def test_lines2items_decoding_error(filter_module: FilterModule) -> None:

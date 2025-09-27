@@ -26,6 +26,8 @@ version_added: "1.5.0"
 description:
   - Wraps Python's C(str.splitlines) for use within Ansible playbooks.
   - Uses UTF-8 decoding by default and raises on decoding errors.
+  - Also available as the C(splitlines) alias for familiarity with the
+    underlying Python method.
 options:
   _input:
     description:
@@ -50,6 +52,11 @@ EXAMPLES = r"""
 - name: Preserve newline characters
   ansible.builtin.debug:
     msg: "{{ 'a\\r\n' | o0_o.utils.lines2items(true) }}"  # -> ['a\r\n']
+
+- name: Use the splitlines alias
+  ansible.builtin.debug:
+    msg: "{{ 'first\\nsecond' | o0_o.utils.splitlines }}"
+  # -> ['first', 'second']
 """
 
 RETURN = r"""
@@ -66,7 +73,10 @@ class FilterModule:
 
     def filters(self) -> Dict[str, Any]:
         """Return available filters."""
-        return {"lines2items": self.lines2items_filter}
+        return {
+            "lines2items": self.lines2items_filter,
+            "splitlines": self.lines2items_filter,
+        }
 
     def lines2items_filter(
         self, value: Any, keepends: bool = False

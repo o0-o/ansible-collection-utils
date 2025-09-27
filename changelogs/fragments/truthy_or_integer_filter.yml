@@ -6,4 +6,5 @@ minor_changes:
     literals while still handling Ansible boolean strings, plus options to
     map zero to false and to require positive integers.
   - Added the `o0_o.utils.lines2items` filter as a thin wrapper around
-    Python's `splitlines()` for converting multi-line text into lists.
+    Python's `splitlines()` for converting multi-line text into lists,
+    with a `splitlines` alias for familiarity.
