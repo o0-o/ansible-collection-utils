@@ -14,3 +14,6 @@ minor_changes:
   - Added the `o0_o.utils.dict2items` filter that mirrors the extended
     behaviour of `items2dict`, supporting the same key fallback logic,
     default values, and collision handling.
+  - Added the `o0_o.utils.rekey` filter that re-keys dictionaries using
+    the shared helpers, including key fallbacks, optional preservation of
+    the original key, default value support, and collision controls.

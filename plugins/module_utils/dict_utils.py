@@ -31,6 +31,13 @@ from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
 ITEMS_VALID_COLLISIONS = {"fail", "list", "combine"}
 
 
+__all__ = [
+    "items2dict",
+    "dict2items",
+    "rekey",
+]
+
+
 def items2dict(
     items: Iterable[Dict[str, Any]],
     key_name: Any = "key",
@@ -357,13 +364,13 @@ def _select_output_key_field(
         if value_dict.get(candidate) == key:
             return candidate
 
-        if skip_missing_key:
-            return None
+    if skip_missing_key:
+        return None
 
-        raise AnsibleFilterError(
-            "dict2items could not determine output key field; "
-            f"checked: {', '.join(key_candidates)}"
-        )
+    raise AnsibleFilterError(
+        "dict2items could not determine output key field; "
+        f"checked: {', '.join(key_candidates)}"
+    )
 
 
 def _combine_dicts(
@@ -383,3 +390,167 @@ def _combine_dicts(
     if reverse:
         return combine(value_payload, existing_value, **combine_kwargs)
     return combine(existing_value, value_payload, **combine_kwargs)
+
+
+def _is_effectively_empty(payload: Dict[str, Any]) -> bool:
+    if not payload:
+        return True
+    for value in payload.values():
+        if _is_effectively_empty_value(value):
+            continue
+        return False
+    return True
+
+
+def _is_effectively_empty_value(value: Any) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, (dict, list, tuple, set)) and not value:
+        return True
+    return False
+
+
+def rekey(
+    mapping: Dict[Any, Any],
+    key_name: Any,
+    store_key_as: Optional[Any] = None,
+    collision: str = "fail",
+    reverse_combine_order: bool = False,
+    combine_args: Optional[Dict[str, Any]] = None,
+    default_value: Any = None,
+    allow_empty: bool = True,
+    skip_missing_key: bool = False,
+) -> Dict[Any, Any]:
+    """Refactor dictionary keys using dict/items helpers."""
+    if not isinstance(mapping, dict):
+        raise AnsibleFilterError("rekey requires a dictionary input")
+
+    new_key_candidates = wantlist(key_name, want_list=True)
+    if not new_key_candidates:
+        raise AnsibleFilterError(
+            "rekey requires at least one key_name candidate"
+        )
+    for candidate in new_key_candidates:
+        if not isinstance(candidate, str) or not candidate:
+            raise AnsibleFilterError(
+                "rekey key_name entries must be non-empty strings"
+            )
+
+    store_fields: List[str] = []
+    if store_key_as is not None:
+        store_fields = wantlist(store_key_as, want_list=True)
+        if not store_fields:
+            raise AnsibleFilterError(
+                "rekey store_key_as must provide at least one field when set"
+            )
+        for field in store_fields:
+            if not isinstance(field, str) or not field:
+                raise AnsibleFilterError(
+                    "rekey store_key_as entries must be non-empty strings"
+                )
+
+    if default_value is not None and not isinstance(default_value, dict):
+        raise AnsibleFilterError(
+            "rekey default_value must be a dictionary when value_name is None"
+        )
+
+    result: Dict[Any, Any] = {}
+    combine_kwargs = dict(combine_args or {})
+    for index, (original_key, value) in enumerate(mapping.items()):
+        if not isinstance(value, dict):
+            if skip_missing_key:
+                continue
+            raise AnsibleFilterError(
+                "rekey expects dictionary values when value_name is None; "
+                f"key {original_key!r} is {type(value).__name__}"
+            )
+
+        chosen_field: Optional[str] = None
+        for candidate in new_key_candidates:
+            if candidate in value:
+                chosen_field = candidate
+                break
+        if chosen_field is None:
+            if skip_missing_key:
+                continue
+            raise AnsibleFilterError(
+                f"rekey element {index} missing key candidates: "
+                f"{', '.join(new_key_candidates)}"
+            )
+
+        new_key_value = value[chosen_field]
+        base_payload: Dict[str, Any] = {}
+        empty_fields: List[str] = []
+        for field, field_value in value.items():
+            if field == chosen_field:
+                continue
+            if _is_effectively_empty_value(field_value):
+                empty_fields.append(field)
+            else:
+                base_payload[field] = field_value
+
+        if not allow_empty:
+            value_payload: Dict[str, Any] = base_payload.copy()
+            for field in empty_fields:
+                if default_value is None:
+                    value_payload[field] = {}
+                else:
+                    value_payload[field] = default_value.copy()
+            if not value_payload:
+                value_payload = (
+                    default_value.copy() if default_value is not None else {}
+                )
+        else:
+            value_payload = base_payload.copy()
+            for field in empty_fields:
+                value_payload[field] = value.get(field)
+
+        target_field: Optional[str] = None
+        for candidate in store_fields:
+            if candidate not in value_payload:
+                target_field = candidate
+                break
+        if target_field is None and store_fields:
+            target_field = store_fields[0]
+
+        if target_field:
+            value_payload[target_field] = original_key
+
+        if collision == "fail":
+            if new_key_value in result:
+                raise AnsibleFilterError(
+                    f"rekey duplicate key '{new_key_value}' encountered"
+                )
+            result[new_key_value] = value_payload
+            continue
+
+        if collision == "list":
+            existing = result.setdefault(new_key_value, [])
+            if not isinstance(existing, list):
+                result[new_key_value] = existing = [existing]
+            existing.append(value_payload)
+            continue
+
+        if not isinstance(value_payload, dict):
+            raise AnsibleFilterError(
+                "rekey requires dict values when collision='combine'"
+            )
+
+        existing_value = result.get(new_key_value)
+        if existing_value is None:
+            result[new_key_value] = value_payload
+            continue
+
+        if not isinstance(existing_value, dict):
+            raise AnsibleFilterError(
+                "rekey existing value is not a dict; cannot combine"
+            )
+
+        result[new_key_value] = _combine_dicts(
+            existing_value,
+            value_payload,
+            combine_kwargs,
+            reverse_combine_order,
+        )
+
+    return result

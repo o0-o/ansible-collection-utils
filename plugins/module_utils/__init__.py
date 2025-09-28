@@ -29,6 +29,7 @@ from ansible_collections.o0_o.utils.plugins.module_utils.truthy_utils import (  
 from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # noqa: E501
     dict2items,
     items2dict,
+    rekey,
 )
 
 __all__ = [
@@ -39,4 +40,5 @@ __all__ = [
     "truthy_or_integer",
     "items2dict",
     "dict2items",
+    "rekey",
 ]
