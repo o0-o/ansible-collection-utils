@@ -28,7 +28,8 @@ name: rekey
 short_description: Change dictionary keys to values of nested fields
 version_added: "1.5.0"
 description:
-  - Convenience wrapper around C(dict2items) followed by C(items2dict)
+  - >-
+    Convenience wrapper around C(dict2items) followed by C(items2dict)
     allowing dictionaries to be re-keyed without manual intermediate
     conversions.
 options:
@@ -40,50 +41,58 @@ options:
   key_name:
     description:
       - Field name used to determine the new key.
-      - Accepts a list of field names; the first available entry will be
+      - >-
+        Accepts a list of field names; the first available entry will be
         used.
     type: str
     required: true
   store_key_as:
     description:
-      - Optional field name (or list of field names) to store the
+      - >-
+        Optional field name (or list of field names) to store the
         original key inside each value.
     type: str
   collision:
     description:
       - Behaviour when duplicate keys are encountered.
-      - Matches the behaviour of C(items2dict): C(fail), C(list), or
+      - >-
+        Matches the behaviour of C(items2dict): C(fail), C(list), or
         C(combine).
     type: str
     default: fail
     choices: [fail, list, combine]
   reverse_combine_order:
     description:
-      - When C(collision=combine), merge newer entries before earlier
+      - >-
+        When C(collision=combine), merge newer entries before earlier
         ones.
     type: bool
     default: false
   combine_args:
     description:
-      - Additional keyword arguments forwarded to the underlying
+      - >-
+        Additional keyword arguments forwarded to the underlying
         C(combine) filter when C(collision=combine).
     type: dict
     default: {}
   default_value:
     description:
-      - Value to use when the selected value field is missing or empty
+      - >-
+        Value to use when the selected value field is missing or empty
         (subject to C(allow_empty)).
     type: raw
     default: null
   allow_empty:
     description:
-      - When C(false), treat empty dictionaries as missing values and
+      - >-
+        When C(false), treat empty dictionaries as missing values and
         substitute C(default_value).
     type: bool
     default: true
   skip_missing_key:
     description:
-      - When C(true), skip entries that cannot determine a new key
+      - >-
+        When C(true), skip entries that cannot determine a new key
         instead of raising an error.
     type: bool
     default: false
@@ -92,14 +101,14 @@ author:
 """
 
 EXAMPLES = r"""
-vars:
-  users:
-    '1000':
-      name: o0-o
-      home: /home/o0-o
-    '1001':
-      name: foo
-      home: /home/foo
+# Given this data structure:
+# users:
+#   '1000':
+#     name: o0-o
+#     home: /home/o0-o
+#   '1001':
+#     name: foo
+#     home: /home/foo
 
 - name: Re-key users by their name
   ansible.builtin.set_fact:
@@ -109,8 +118,9 @@ vars:
              key_name='name',
              store_key_as='id'
          ) }}
-  # -> {'o0-o': {'home': '/home/o0-o', 'id': '1000'},
-  #     'foo': {'home': '/home/foo', 'id': '1001'}}
+  # Result:
+  # {'o0-o': {'home': '/home/o0-o', 'id': '1000'},
+  #  'foo': {'home': '/home/foo', 'id': '1001'}}
 """
 
 RETURN = r"""
