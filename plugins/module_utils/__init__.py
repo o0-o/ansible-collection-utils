@@ -31,6 +31,10 @@ from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # 
     items2dict,
     rekey,
 )
+from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # noqa: E501
+    parse_date_to_epoch,
+    parse_datetime,
+)
 
 __all__ = [
     "parse_hostname",
@@ -41,4 +45,6 @@ __all__ = [
     "items2dict",
     "dict2items",
     "rekey",
+    "parse_date_to_epoch",
+    "parse_datetime",
 ]

@@ -1,0 +1,12 @@
+# vim: ts=2:sw=2:sts=2:et:ft=yaml.ansible
+# -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
+---
+minor_changes:
+  - Added the `o0_o.utils.datetime` filter for parsing date/time strings
+    to structured dicts with seconds (epoch or time-only), iso8601, offset
+    (timezone in seconds, if present), and pretty (CMOS style) fields. Only
+    includes precision present in input.
+  - Added the `parse_datetime` utility function in `date_utils` module
+    for flexible date parsing using python-dateutil's internal parser API
+    to detect precision (date-only, time-only, with/without seconds, etc.),
+    returning comprehensive datetime information with adaptive formatting.
