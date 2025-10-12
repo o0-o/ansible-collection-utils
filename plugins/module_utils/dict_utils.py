@@ -15,14 +15,6 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Optional
 
-try:
-    from ansible.errors import AnsibleFilterError
-except ImportError:  # pragma: no cover - ansible not available in unit tests
-
-    class AnsibleFilterError(Exception):
-        """Fallback AnsibleFilterError when ansible is unavailable."""
-
-
 from ansible.module_utils.common.text.converters import to_native
 
 from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
@@ -56,27 +48,25 @@ def items2dict(
     """
     key_candidates = wantlist(key_name, want_list=True)
     if not key_candidates:
-        raise AnsibleFilterError(
-            "items2dict requires at least one key_name candidate"
-        )
+        raise ValueError("items2dict requires at least one key_name candidate")
     for candidate in key_candidates:
         if not isinstance(candidate, str) or not candidate:
-            raise AnsibleFilterError(
+            raise ValueError(
                 "items2dict key_name entries must be non-empty strings"
             )
 
     if value_name is not None and not isinstance(value_name, str):
-        raise AnsibleFilterError(
+        raise ValueError(
             "items2dict 'value_name' parameter must be a string or None"
         )
 
     collision_mode = (collision or "").lower()
     if collision_mode not in ITEMS_VALID_COLLISIONS:
-        raise AnsibleFilterError(
+        raise ValueError(
             "items2dict collision must be one of 'fail', 'list', or 'combine'"
         )
     if reverse_combine_order and collision_mode != "combine":
-        raise AnsibleFilterError(
+        raise ValueError(
             "items2dict reverse_combine_order is only valid when "
             "collision='combine'"
         )
@@ -86,7 +76,7 @@ def items2dict(
 
     for index, item in enumerate(items):
         if not isinstance(item, dict):
-            raise AnsibleFilterError(
+            raise ValueError(
                 "items2dict expects dictionaries; "
                 f"item {index} is {type(item).__name__}"
             )
@@ -99,7 +89,7 @@ def items2dict(
         if key_field is None:
             if skip_missing_key:
                 continue
-            raise AnsibleFilterError(
+            raise ValueError(
                 "items2dict element "
                 f"{index} missing key candidates: {', '.join(key_candidates)}"
             )
@@ -145,7 +135,7 @@ def items2dict(
 
         if collision_mode == "fail":
             if key_value in result:
-                raise AnsibleFilterError(
+                raise ValueError(
                     f"items2dict duplicate key '{key_value}' encountered"
                 )
             result[key_value] = value_payload
@@ -159,7 +149,7 @@ def items2dict(
             continue
 
         if not isinstance(value_payload, dict):
-            raise AnsibleFilterError(
+            raise ValueError(
                 "items2dict requires dict values when collision='combine'"
             )
         if key_value not in result:
@@ -168,7 +158,7 @@ def items2dict(
 
         existing_value = result[key_value]
         if not isinstance(existing_value, dict):
-            raise AnsibleFilterError(
+            raise ValueError(
                 "items2dict existing value is not a dict; cannot merge"
             )
 
@@ -194,27 +184,25 @@ def dict2items(
 ) -> List[Dict[str, Any]]:
     """Convert dictionaries into list representations."""
     if not isinstance(mapping, dict):
-        raise AnsibleFilterError("dict2items requires a dictionary input")
+        raise ValueError("dict2items requires a dictionary input")
 
     key_candidates = wantlist(key_name, want_list=True)
     if not key_candidates:
-        raise AnsibleFilterError(
-            "dict2items requires at least one key_name candidate"
-        )
+        raise ValueError("dict2items requires at least one key_name candidate")
     for candidate in key_candidates:
         if not isinstance(candidate, str) or not candidate:
-            raise AnsibleFilterError(
+            raise ValueError(
                 "dict2items key_name entries must be non-empty strings"
             )
 
     if value_name is not None and not isinstance(value_name, str):
-        raise AnsibleFilterError(
+        raise ValueError(
             "dict2items 'value_name' parameter must be a string or None"
         )
 
     collision_mode = (collision or "").lower()
     if collision_mode not in ITEMS_VALID_COLLISIONS:
-        raise AnsibleFilterError(
+        raise ValueError(
             "dict2items collision must be one of 'fail', 'list', or 'combine'"
         )
 
@@ -276,7 +264,7 @@ def _build_single_item(
         if processed_value is None or not isinstance(processed_value, dict):
             if skip_missing_key:
                 return None
-            raise AnsibleFilterError(
+            raise ValueError(
                 "dict2items requires dict values when value_name is None"
             )
 
@@ -290,7 +278,7 @@ def _build_single_item(
         if existing not in (None, key):
             if skip_missing_key:
                 return None
-            raise AnsibleFilterError(
+            raise ValueError(
                 f"dict2items cannot assign key '{key_field}'={key!r}; "
                 f"existing value {existing!r} conflicts"
             )
@@ -322,9 +310,7 @@ def _expand_list_value(
     if not isinstance(value, list):
         if skip_missing_key:
             return []
-        raise AnsibleFilterError(
-            "dict2items collision='list' expects list values"
-        )
+        raise ValueError("dict2items collision='list' expects list values")
 
     expanded: List[Dict[str, Any]] = []
     for index, element in enumerate(value):
@@ -338,8 +324,8 @@ def _expand_list_value(
                 allow_empty=allow_empty,
                 skip_missing_key=skip_missing_key,
             )
-        except AnsibleFilterError as exc:
-            raise AnsibleFilterError(
+        except ValueError as exc:
+            raise ValueError(
                 f"dict2items list element {index}: {exc}"
             ) from exc
         if item is not None:
@@ -367,7 +353,7 @@ def _select_output_key_field(
     if skip_missing_key:
         return None
 
-    raise AnsibleFilterError(
+    raise ValueError(
         "dict2items could not determine output key field; "
         f"checked: {', '.join(key_candidates)}"
     )
@@ -381,9 +367,10 @@ def _combine_dicts(
 ) -> Dict[str, Any]:
     """Call Ansible's combine filter lazily."""
     try:
+        # pylint: disable=ansible-bad-module-import
         from ansible.plugins.filter.core import combine
     except ImportError as exc:  # pragma: no cover - defensive guard
-        raise AnsibleFilterError(
+        raise ValueError(
             f"items2dict requires the core combine filter: {to_native(exc)}"
         ) from exc
 
@@ -423,16 +410,14 @@ def rekey(
 ) -> Dict[Any, Any]:
     """Refactor dictionary keys using dict/items helpers."""
     if not isinstance(mapping, dict):
-        raise AnsibleFilterError("rekey requires a dictionary input")
+        raise ValueError("rekey requires a dictionary input")
 
     new_key_candidates = wantlist(key_name, want_list=True)
     if not new_key_candidates:
-        raise AnsibleFilterError(
-            "rekey requires at least one key_name candidate"
-        )
+        raise ValueError("rekey requires at least one key_name candidate")
     for candidate in new_key_candidates:
         if not isinstance(candidate, str) or not candidate:
-            raise AnsibleFilterError(
+            raise ValueError(
                 "rekey key_name entries must be non-empty strings"
             )
 
@@ -440,17 +425,17 @@ def rekey(
     if store_key_as is not None:
         store_fields = wantlist(store_key_as, want_list=True)
         if not store_fields:
-            raise AnsibleFilterError(
+            raise ValueError(
                 "rekey store_key_as must provide at least one field when set"
             )
         for field in store_fields:
             if not isinstance(field, str) or not field:
-                raise AnsibleFilterError(
+                raise ValueError(
                     "rekey store_key_as entries must be non-empty strings"
                 )
 
     if default_value is not None and not isinstance(default_value, dict):
-        raise AnsibleFilterError(
+        raise ValueError(
             "rekey default_value must be a dictionary when value_name is None"
         )
 
@@ -460,7 +445,7 @@ def rekey(
         if not isinstance(value, dict):
             if skip_missing_key:
                 continue
-            raise AnsibleFilterError(
+            raise ValueError(
                 "rekey expects dictionary values when value_name is None; "
                 f"key {original_key!r} is {type(value).__name__}"
             )
@@ -473,7 +458,7 @@ def rekey(
         if chosen_field is None:
             if skip_missing_key:
                 continue
-            raise AnsibleFilterError(
+            raise ValueError(
                 f"rekey element {index} missing key candidates: "
                 f"{', '.join(new_key_candidates)}"
             )
@@ -518,7 +503,7 @@ def rekey(
 
         if collision == "fail":
             if new_key_value in result:
-                raise AnsibleFilterError(
+                raise ValueError(
                     f"rekey duplicate key '{new_key_value}' encountered"
                 )
             result[new_key_value] = value_payload
@@ -532,7 +517,7 @@ def rekey(
             continue
 
         if not isinstance(value_payload, dict):
-            raise AnsibleFilterError(
+            raise ValueError(
                 "rekey requires dict values when collision='combine'"
             )
 
@@ -542,7 +527,7 @@ def rekey(
             continue
 
         if not isinstance(existing_value, dict):
-            raise AnsibleFilterError(
+            raise ValueError(
                 "rekey existing value is not a dict; cannot combine"
             )
 
