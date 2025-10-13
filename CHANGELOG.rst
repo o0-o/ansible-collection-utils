@@ -4,6 +4,21 @@ o0\_o.utils Release Notes
 
 .. contents:: Topics
 
+v1.5.0
+======
+
+Minor Changes
+-------------
+
+- Added the `o0_o.utils.datetime` filter for parsing date/time strings to structured dicts with seconds (epoch or time-only), iso8601, offset (timezone in seconds, if present), and pretty (CMOS style) fields. Only includes precision present in input.
+- Added the `o0_o.utils.dict2items` filter that mirrors the extended behaviour of `items2dict`, supporting the same key fallback logic, default values, and collision handling.
+- Added the `o0_o.utils.items2dict` filter with configurable key/value field names (including key fallbacks), collision behaviour, default values, and optional deep combines via the `combine` filter.
+- Added the `o0_o.utils.lines2items` filter as a thin wrapper around Python's `splitlines()` for converting multi-line text into lists, with a `splitlines` alias for familiarity.
+- Added the `o0_o.utils.rekey` filter that re-keys dictionaries using the shared helpers, including key fallbacks, optional preservation of the original key, default value support, and collision controls.
+- Added the `o0_o.utils.truthy_or_integer` filter that prefers integer literals while still handling Ansible boolean strings, plus options to map zero to false and to require positive integers.
+- Added the `parse_datetime` utility function in `date_utils` module for flexible date parsing using python-dateutil's internal parser API to detect precision (date-only, time-only, with/without seconds, etc.), returning comprehensive datetime information with adaptive formatting.
+- README streamlined to brief overview with links to GitHub Pages docs (antsibull-docs); removed plugin lists and lengthy examples; documented that docs are not versioned and are published continuously by CI.
+
 v1.4.1
 ======
 
