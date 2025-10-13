@@ -4,3 +4,6 @@
 dnspython
 idna
 tldextract
+
+# Required for datetime filter plugin
+python-dateutil

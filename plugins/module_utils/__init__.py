@@ -23,10 +23,28 @@ from ansible_collections.o0_o.utils.plugins.module_utils.list_utils import (  # 
 from ansible_collections.o0_o.utils.plugins.module_utils.si_utils import (  # noqa: E501
     parse_si,
 )
+from ansible_collections.o0_o.utils.plugins.module_utils.truthy_utils import (  # noqa: E501
+    truthy_or_integer,
+)
+from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # noqa: E501
+    dict2items,
+    items2dict,
+    rekey,
+)
+from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # noqa: E501
+    parse_date_to_epoch,
+    parse_datetime,
+)
 
 __all__ = [
     "parse_hostname",
     "string2items",
     "wantlist",
     "parse_si",
+    "truthy_or_integer",
+    "items2dict",
+    "dict2items",
+    "rekey",
+    "parse_date_to_epoch",
+    "parse_datetime",
 ]
