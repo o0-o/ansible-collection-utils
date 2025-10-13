@@ -35,6 +35,9 @@ from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # 
     parse_date_to_epoch,
     parse_datetime,
 )
+from ansible_collections.o0_o.utils.plugins.module_utils.string_utils import (  # noqa: E501
+    to_pascal_case,
+)
 
 __all__ = [
     "parse_hostname",
@@ -47,4 +50,5 @@ __all__ = [
     "rekey",
     "parse_date_to_epoch",
     "parse_datetime",
+    "to_pascal_case",
 ]
