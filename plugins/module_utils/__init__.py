@@ -34,8 +34,10 @@ from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # 
 from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # noqa: E501
     parse_date_to_epoch,
     parse_datetime,
+    parse_elapsed_time,
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.string_utils import (  # noqa: E501
+    strip_comments,
     to_pascal_case,
 )
 
@@ -50,5 +52,7 @@ __all__ = [
     "rekey",
     "parse_date_to_epoch",
     "parse_datetime",
+    "parse_elapsed_time",
     "to_pascal_case",
+    "strip_comments",
 ]
