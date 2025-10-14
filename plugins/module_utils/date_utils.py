@@ -286,7 +286,7 @@ def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
 
     Examples:
         >>> parse_elapsed_time("45:30")
-        {'seconds': 2730, 'pretty': '45 minutes, 30 seconds', 'iso': 'PT45M30S'}
+        {'seconds': 2730, 'pretty': '45 minutes, 30 seconds', 'iso8601': 'PT45M30S'}
         >>> parse_elapsed_time("1:23:45")
         {'seconds': 5025, 'pretty': '1 hour, 23 minutes, 45 seconds', ...}
         >>> parse_elapsed_time("2-03:45:12")
@@ -294,7 +294,7 @@ def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
 
     :param str elapsed_str: Elapsed time string in ps etime format
     :returns Optional[Dict[str, Any]]: Dict with 'seconds' (int), 'pretty'
-        (str), and 'iso' (str) keys, or None if parsing fails
+        (str), and 'iso8601' (str) keys, or None if parsing fails
     """
     if not elapsed_str:
         return None
@@ -381,7 +381,7 @@ def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
         return {
             "seconds": total_seconds,
             "pretty": pretty,
-            "iso": iso,
+            "iso8601": iso,
         }
 
     except (ValueError, AttributeError):
