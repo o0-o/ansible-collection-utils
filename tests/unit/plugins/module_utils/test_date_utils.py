@@ -13,7 +13,10 @@
 
 from __future__ import annotations
 
+from datetime import timezone, timedelta
+
 from ansible_collections.o0_o.utils.plugins.module_utils import (
+    format_epoch_timestamp,
     parse_datetime,
     parse_date_to_epoch,
 )
@@ -161,6 +164,75 @@ class TestParseDatetime:
         # Noon is 12*3600 = 43200 seconds since midnight
         assert result["seconds"] == 43200
         assert "12:00 p.m." in result["pretty"]
+
+
+class TestFormatEpochTimestamp:
+    """Test format_epoch_timestamp utility function."""
+
+    def test_format_timestamp_utc_default(self) -> None:
+        """Test formatting timestamp with default UTC timezone."""
+        # 2025-01-15 15:10:45 UTC
+        timestamp = 1736953845.0
+        result = format_epoch_timestamp(timestamp)
+
+        assert result["seconds"] == 1736953845
+        assert result["iso8601"] == "2025-01-15T15:10:45Z"
+        assert result["offset"] == 0
+        assert "January 15, 2025" in result["pretty"]
+        assert "3:10:45 p.m." in result["pretty"]
+
+    def test_format_timestamp_with_timezone(self) -> None:
+        """Test formatting timestamp with custom timezone."""
+        # 2025-01-15 15:10:45 UTC = 10:10:45 EST (UTC-5)
+        timestamp = 1736953845.0
+        est = timezone(timedelta(hours=-5))
+        result = format_epoch_timestamp(timestamp, tz=est)
+
+        assert result["seconds"] == 1736953845
+        # Time should be adjusted to EST
+        assert result["iso8601"] == "2025-01-15T10:10:45-05:00"
+        assert result["offset"] == -18000  # -5 hours in seconds
+        assert "January 15, 2025" in result["pretty"]
+        assert "10:10:45 a.m." in result["pretty"]
+
+    def test_format_timestamp_positive_offset(self) -> None:
+        """Test formatting timestamp with positive UTC offset."""
+        # 2025-01-15 15:10:45 UTC = 02:10:45+11 AEDT (UTC+11)
+        timestamp = 1736953845.0
+        aedt = timezone(timedelta(hours=11))
+        result = format_epoch_timestamp(timestamp, tz=aedt)
+
+        assert result["seconds"] == 1736953845
+        # Time should be adjusted to AEDT (next day)
+        assert result["iso8601"] == "2025-01-16T02:10:45+11:00"
+        assert result["offset"] == 39600  # +11 hours in seconds
+        assert "January 16, 2025" in result["pretty"]
+        assert "2:10:45 a.m." in result["pretty"]
+
+    def test_format_timestamp_with_microseconds(self) -> None:
+        """Test formatting timestamp with microseconds."""
+        timestamp = 1736953845.123456
+        result = format_epoch_timestamp(timestamp, include_microseconds=True)
+
+        assert result["seconds"] == 1736953845
+        assert result["microseconds"] == 123456
+        assert "iso8601" in result
+
+    def test_format_timestamp_without_microseconds(self) -> None:
+        """Test that microseconds are not included by default."""
+        timestamp = 1736953845.123456
+        result = format_epoch_timestamp(timestamp)
+
+        assert result["seconds"] == 1736953845
+        assert "microseconds" not in result
+
+    def test_format_timestamp_invalid(self) -> None:
+        """Test handling of invalid timestamp."""
+        # Very large timestamp that might cause issues
+        result = format_epoch_timestamp(9999999999999.0)
+
+        # Should still return seconds even if formatting fails
+        assert "seconds" in result
 
 
 class TestParseDateToEpoch:

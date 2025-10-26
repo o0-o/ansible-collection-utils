@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
 try:
@@ -286,7 +286,8 @@ def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
 
     Examples:
         >>> parse_elapsed_time("45:30")
-        {'seconds': 2730, 'pretty': '45 minutes, 30 seconds', 'iso8601': 'PT45M30S'}
+        {'seconds': 2730, 'pretty': '45 minutes, 30 seconds',
+         'iso8601': 'PT45M30S'}
         >>> parse_elapsed_time("1:23:45")
         {'seconds': 5025, 'pretty': '1 hour, 23 minutes, 45 seconds', ...}
         >>> parse_elapsed_time("2-03:45:12")
@@ -332,20 +333,14 @@ def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
             return None
 
         # Calculate total seconds
-        total_seconds = (
-            days * 86400 + hours * 3600 + minutes * 60 + seconds
-        )
+        total_seconds = days * 86400 + hours * 3600 + minutes * 60 + seconds
 
         # Build pretty format
         pretty_parts = []
         if days > 0:
-            pretty_parts.append(
-                f"{days} day{'s' if days != 1 else ''}"
-            )
+            pretty_parts.append(f"{days} day{'s' if days != 1 else ''}")
         if hours > 0:
-            pretty_parts.append(
-                f"{hours} hour{'s' if hours != 1 else ''}"
-            )
+            pretty_parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
         if minutes > 0:
             pretty_parts.append(
                 f"{minutes} minute{'s' if minutes != 1 else ''}"
@@ -400,3 +395,70 @@ def parse_date_to_epoch(date_str: str) -> Optional[int]:
     """
     result = parse_datetime(date_str)
     return result["seconds"] if result else None
+
+
+def format_epoch_timestamp(
+    timestamp: float,
+    include_microseconds: bool = False,
+    tz: Optional[timezone] = None,
+) -> Dict[str, Any]:
+    """Format Unix epoch timestamp into structured time dictionary.
+
+    Converts a Unix timestamp (seconds since epoch) into a dictionary
+    with the same structure as parse_datetime() returns.
+
+    :param float timestamp: Unix timestamp (seconds since epoch)
+    :param bool include_microseconds: Include microseconds in output
+    :param Optional[timezone] tz: Timezone for conversion (defaults to
+        UTC)
+    :returns Dict[str, Any]: Dictionary with 'seconds', 'iso8601',
+        'pretty', and 'offset' keys
+    """
+    result: Dict[str, Any] = {"seconds": int(timestamp)}
+
+    if tz is None:
+        tz = timezone.utc
+
+    try:
+        dt = datetime.fromtimestamp(timestamp, tz=tz)
+
+        # Calculate offset in seconds from UTC
+        utc_offset = dt.utcoffset()
+        offset_seconds = int(utc_offset.total_seconds()) if utc_offset else 0
+
+        # Create a mock raw object for formatting functions
+        class RawTimestamp:
+            def __init__(
+                self, dt: datetime, include_micro: bool, offset_sec: int
+            ):
+                self.year = dt.year
+                self.month = dt.month
+                self.day = dt.day
+                self.hour = dt.hour
+                self.minute = dt.minute
+                self.second = dt.second
+                self.microsecond = dt.microsecond if include_micro else 0
+                self.tzoffset = offset_sec
+                self.tzname = dt.tzname() or "UTC"
+
+        raw = RawTimestamp(dt, include_microseconds, offset_seconds)
+
+        # Use existing formatting functions
+        iso8601 = _format_iso8601(dt, raw)
+        if iso8601:
+            result["iso8601"] = iso8601
+
+        pretty = _format_cmos(dt, raw)
+        if pretty:
+            result["pretty"] = pretty
+
+        result["offset"] = offset_seconds
+
+        if include_microseconds and dt.microsecond > 0:
+            result["microseconds"] = dt.microsecond
+
+    except (ValueError, OSError):
+        # Timestamp out of range or other error - just return seconds
+        pass
+
+    return result
