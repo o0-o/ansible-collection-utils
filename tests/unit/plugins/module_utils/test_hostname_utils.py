@@ -31,6 +31,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 parse_hostname = host_utils.parse_hostname
+generate_random_hostname = host_utils.generate_random_hostname
 
 
 @pytest.mark.parametrize(
@@ -210,3 +211,55 @@ def test_parse_hostname_missing_dependencies(
     monkeypatch.setattr(host_utils, flag, False)
     with pytest.raises(ImportError, match=error_snippet):
         parse_hostname("example.com")
+
+
+def test_generate_random_hostname_default_length() -> None:
+    """Test hostname generation with default length."""
+    hostname = generate_random_hostname()
+    assert len(hostname) == 16
+    assert hostname.islower()
+    assert hostname.isalpha()
+
+
+@pytest.mark.parametrize("length", [1, 5, 8, 16, 32, 64])
+def test_generate_random_hostname_custom_length(length: int) -> None:
+    """Test hostname generation with various custom lengths."""
+    hostname = generate_random_hostname(length)
+    assert len(hostname) == length
+    assert hostname.islower()
+    assert hostname.isalpha()
+
+
+def test_generate_random_hostname_only_lowercase_letters() -> None:
+    """Test that generated hostname contains only lowercase letters."""
+    hostname = generate_random_hostname(100)
+    # Check each character is lowercase letter
+    for char in hostname:
+        assert char in "abcdefghijklmnopqrstuvwxyz"
+
+
+def test_generate_random_hostname_uniqueness() -> None:
+    """Test that multiple generated hostnames are unique."""
+    # Generate 100 hostnames and verify they're all different
+    hostnames = [generate_random_hostname() for i in range(100)]
+    # Should be highly unlikely to get duplicates with 16-char random strings
+    assert len(set(hostnames)) == 100
+
+
+def test_generate_random_hostname_rfc_compliant() -> None:
+    """Test that generated hostnames are RFC-compliant."""
+    hostname = generate_random_hostname()
+    # RFC requires hostnames start with letter (not digit)
+    assert hostname[0].isalpha()
+    # No digits, hyphens, or other characters
+    assert hostname.isalpha()
+    # All lowercase for consistency
+    assert hostname.islower()
+
+
+def test_generate_random_hostname_invalid_length() -> None:
+    """Test that invalid length raises ValueError."""
+    with pytest.raises(ValueError, match="length must be at least 1"):
+        generate_random_hostname(0)
+    with pytest.raises(ValueError, match="length must be at least 1"):
+        generate_random_hostname(-1)

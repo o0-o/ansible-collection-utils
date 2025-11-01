@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from ansible_collections.o0_o.utils.plugins.module_utils.hostname_utils import (  # noqa: E501
+    generate_random_hostname,
     parse_hostname,
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.list_utils import (  # noqa: E501
@@ -32,6 +33,7 @@ from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # 
     rekey,
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # noqa: E501
+    format_epoch_timestamp,
     parse_date_to_epoch,
     parse_datetime,
     parse_elapsed_time,
@@ -42,6 +44,7 @@ from ansible_collections.o0_o.utils.plugins.module_utils.string_utils import (  
 )
 
 __all__ = [
+    "generate_random_hostname",
     "parse_hostname",
     "string2items",
     "wantlist",
@@ -50,6 +53,7 @@ __all__ = [
     "items2dict",
     "dict2items",
     "rekey",
+    "format_epoch_timestamp",
     "parse_date_to_epoch",
     "parse_datetime",
     "parse_elapsed_time",

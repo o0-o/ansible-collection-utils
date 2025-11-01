@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Union
 
+import secrets
+import string
 import traceback
 
 try:
@@ -46,7 +48,31 @@ except Exception:  # pragma: no cover - surfaced to caller
     TLDEXTRACT_IMPORT_ERROR = traceback.format_exc()
     _TLD_EXTRACTOR = None
 
-__all__ = ["parse_hostname"]
+__all__ = ["parse_hostname", "generate_random_hostname"]
+
+
+def generate_random_hostname(length: int = 16) -> str:
+    """Generate a cryptographically secure random RFC-compliant hostname.
+
+    Creates a random hostname using lowercase ASCII letters only, ensuring
+    RFC compliance by:
+    - Starting with a letter (not a digit)
+    - Containing only lowercase letters
+    - Having specified length (default 16 characters)
+
+    Suitable for use as dummy hostnames in SSH client configuration
+    testing (ssh -G) or other scenarios requiring valid but meaningless
+    hostnames.
+
+    :param int length: Length of hostname to generate (default 16)
+    :returns str: Random lowercase hostname
+    :raises ValueError: If length is less than 1
+    """
+    if length < 1:
+        raise ValueError("Hostname length must be at least 1")
+
+    alphabet = string.ascii_lowercase
+    return "".join(secrets.choice(alphabet) for i in range(length))
 
 
 def _coerce_hostname_str(data: Union[str, Dict[str, Any]]) -> str:
