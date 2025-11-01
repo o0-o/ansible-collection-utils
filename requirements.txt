@@ -7,3 +7,6 @@ tldextract
 
 # Required for datetime filter plugin
 python-dateutil
+
+# Required for strip_comments helper
+pyparsing

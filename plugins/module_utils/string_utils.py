@@ -13,6 +13,42 @@
 
 from __future__ import annotations
 
+from typing import Iterable, List, Sequence, Union
+
+from pyparsing import (
+    MatchFirst,
+    ParserElement,
+    QuotedString,
+    cStyleComment,
+    cppStyleComment,
+    dblSlashComment,
+    pythonStyleComment,
+)
+
+CommentStyle = Union[
+    str,
+    ParserElement,
+    Sequence[Union[str, ParserElement]],
+]
+
+_COMMENT_STYLES = {
+    "python": pythonStyleComment,
+    "hash": pythonStyleComment,
+    "shell": pythonStyleComment,
+    "c": cStyleComment,
+    "cpp": cppStyleComment,
+    "c++": cppStyleComment,
+    "slash": dblSlashComment,
+    "double_slash": dblSlashComment,
+}
+
+_DEFAULT_QUOTES: Iterable[QuotedString] = (
+    QuotedString('"', escChar="\\"),
+    QuotedString("'", escChar="\\"),
+    QuotedString('"""', escChar="\\", multiline=True),
+    QuotedString("'''", escChar="\\", multiline=True),
+)
+
 
 def to_pascal_case(text: str) -> str:
     """Convert text to PascalCase.
@@ -94,7 +130,9 @@ def to_pascal_case(text: str) -> str:
                 if current:
                     parts.append("".join(current))
                     current = []
-            elif char.isupper() and i > 0 and current and current[-1].islower():
+            elif (
+                char.isupper() and i > 0 and current and current[-1].islower()
+            ):
                 # CamelCase boundary
                 parts.append("".join(current))
                 current = [char]
@@ -135,4 +173,83 @@ def to_pascal_case(text: str) -> str:
     return "".join(part.capitalize() for part in parts if part)
 
 
-__all__ = ["to_pascal_case"]
+def _ensure_parser_elements(
+    style: CommentStyle,
+) -> List[ParserElement]:
+    """Normalize comment style input to parser elements."""
+    if isinstance(style, ParserElement):
+        return [style]
+
+    if isinstance(style, str):
+        key = style.lower()
+        parser = _COMMENT_STYLES.get(key)
+        if parser is None:
+            raise ValueError(f"Unsupported comment style '{style}'")
+        return [parser]
+
+    if isinstance(style, Sequence):
+        elements: List[ParserElement] = []
+        for item in style:
+            elements.extend(_ensure_parser_elements(item))
+        if not elements:
+            raise ValueError("Comment style sequence must not be empty")
+        return elements
+
+    raise TypeError(
+        "comment_style must be a string, ParserElement, "
+        "or sequence of either"
+    )
+
+
+def strip_comments(
+    text: str,
+    comment_style: CommentStyle = "python",
+    strip_blank_lines: bool = True,
+) -> str:
+    """Strip comments from multiline text using pyparsing.
+
+    Respects quoted strings so inline comment markers inside C('"..."')
+    are preserved. Supports common comment syntaxes via C(comment_style)
+    or accepts custom pyparsing expressions.
+
+    :param str text: Multiline input to clean.
+    :param CommentStyle comment_style: Comment syntax to remove. Accepts
+        named styles (C('python'), C('c'), C('cpp'), C('slash')) or
+        custom pyparsing parser elements / sequences thereof.
+    :param bool strip_blank_lines: When ``True`` remove empty lines that
+        remain after comment removal.
+    :returns str: Text with comments stripped.
+    :raises ValueError: If an unknown comment style is requested.
+    :raises TypeError: If C(comment_style) is of an unsupported type.
+    """
+    if not text:
+        return ""
+
+    comment_elements = _ensure_parser_elements(comment_style)
+
+    combined = MatchFirst(
+        [element.copy() for element in comment_elements]
+    ).suppress()
+
+    for quote in _DEFAULT_QUOTES:
+        combined = combined.ignore(quote)
+
+    cleaned = combined.transformString(text)
+
+    lines = cleaned.splitlines()
+    processed: List[str] = []
+    for line in lines:
+        stripped = line.rstrip()
+        if strip_blank_lines:
+            if stripped:
+                processed.append(stripped)
+        else:
+            processed.append(stripped)
+
+    if not processed:
+        return ""
+
+    return "\n".join(processed)
+
+
+__all__ = ["to_pascal_case", "strip_comments"]
