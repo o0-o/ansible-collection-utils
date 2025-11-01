@@ -36,11 +36,9 @@ from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # 
     format_epoch_timestamp,
     parse_date_to_epoch,
     parse_datetime,
-    parse_elapsed_time,
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.string_utils import (  # noqa: E501
     strip_comments,
-    to_pascal_case,
 )
 
 __all__ = [
@@ -56,7 +54,5 @@ __all__ = [
     "format_epoch_timestamp",
     "parse_date_to_epoch",
     "parse_datetime",
-    "parse_elapsed_time",
-    "to_pascal_case",
     "strip_comments",
 ]
