@@ -4,6 +4,17 @@ o0\_o.utils Release Notes
 
 .. contents:: Topics
 
+v1.6.0
+======
+
+Minor Changes
+-------------
+
+- date_utils.format_epoch_timestamp - Add optional ``tz`` parameter to format timestamps in a specific timezone instead of always using UTC.
+- filter.strip_comments - New filter exposing the comment stripping helper to playbooks.
+- hostname_utils - Add ``generate_random_hostname()`` function to create cryptographically secure random RFC-compliant hostnames using lowercase letters only, suitable for testing scenarios like SSH client config validation.
+- module_utils.string_utils - Added ``strip_comments`` helper using pyparsing to remove comments from multiline text with configurable comment styles.
+
 v1.5.0
 ======
 

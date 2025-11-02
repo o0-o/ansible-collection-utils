@@ -116,3 +116,20 @@ releases:
     - readme_ghpages.yml
     - truthy_or_integer_filter.yml
     release_date: '2025-10-13'
+  1.6.0:
+    changes:
+      minor_changes:
+      - date_utils.format_epoch_timestamp - Add optional ``tz`` parameter to format
+        timestamps in a specific timezone instead of always using UTC.
+      - filter.strip_comments - New filter exposing the comment stripping helper to
+        playbooks.
+      - hostname_utils - Add ``generate_random_hostname()`` function to create cryptographically
+        secure random RFC-compliant hostnames using lowercase letters only, suitable
+        for testing scenarios like SSH client config validation.
+      - module_utils.string_utils - Added ``strip_comments`` helper using pyparsing
+        to remove comments from multiline text with configurable comment styles.
+    fragments:
+    - hostname_generate_random.yml
+    - strip_comments_helper.yml
+    - timezone_support.yml
+    release_date: '2025-11-01'

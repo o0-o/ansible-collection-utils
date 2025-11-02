@@ -1,6 +1,0 @@
-minor_changes:
-  - >-
-    hostname_utils - Add ``generate_random_hostname()`` function to create
-    cryptographically secure random RFC-compliant hostnames using lowercase
-    letters only, suitable for testing scenarios like SSH client config
-    validation.
