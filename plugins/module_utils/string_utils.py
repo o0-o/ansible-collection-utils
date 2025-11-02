@@ -13,47 +13,64 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Sequence, Union
+from typing import Any, Iterable, List, Sequence, Union
 
-from pyparsing import (
-    MatchFirst,
-    ParserElement,
-    QuotedString,
-    cStyleComment,
-    cppStyleComment,
-    dblSlashComment,
-    pythonStyleComment,
-)
+try:
+    from pyparsing import (
+        MatchFirst,
+        ParserElement,
+        QuotedString,
+        cStyleComment,
+        cppStyleComment,
+        dblSlashComment,
+        pythonStyleComment,
+    )
+
+    HAS_PYPARSING = True
+    PYPARSING_IMPORT_ERROR = None
+except ImportError:
+    HAS_PYPARSING = False
+    PYPARSING_IMPORT_ERROR = (
+        "pyparsing is required for strip_comments. "
+        "Install with: pip install pyparsing"
+    )
 
 CommentStyle = Union[
     str,
-    ParserElement,
-    Sequence[Union[str, ParserElement]],
+    "ParserElement",
+    Sequence[Union[str, "ParserElement"]],
 ]
 
 _COMMENT_STYLES = {
-    "python": pythonStyleComment,
-    "hash": pythonStyleComment,
-    "shell": pythonStyleComment,
-    "c": cStyleComment,
-    "cpp": cppStyleComment,
-    "c++": cppStyleComment,
-    "slash": dblSlashComment,
-    "double_slash": dblSlashComment,
+    "python": pythonStyleComment if HAS_PYPARSING else None,
+    "hash": pythonStyleComment if HAS_PYPARSING else None,
+    "shell": pythonStyleComment if HAS_PYPARSING else None,
+    "c": cStyleComment if HAS_PYPARSING else None,
+    "cpp": cppStyleComment if HAS_PYPARSING else None,
+    "c++": cppStyleComment if HAS_PYPARSING else None,
+    "slash": dblSlashComment if HAS_PYPARSING else None,
+    "double_slash": dblSlashComment if HAS_PYPARSING else None,
 }
 
-_DEFAULT_QUOTES: Iterable[QuotedString] = (
-    QuotedString('"', escChar="\\"),
-    QuotedString("'", escChar="\\"),
-    QuotedString('"""', escChar="\\", multiline=True),
-    QuotedString("'''", escChar="\\", multiline=True),
+_DEFAULT_QUOTES: Iterable[Any] = (
+    (
+        QuotedString('"', escChar="\\"),
+        QuotedString("'", escChar="\\"),
+        QuotedString('"""', escChar="\\", multiline=True),
+        QuotedString("'''", escChar="\\", multiline=True),
+    )
+    if HAS_PYPARSING
+    else ()
 )
 
 
 def _ensure_parser_elements(
     style: CommentStyle,
-) -> List[ParserElement]:
+) -> List[Any]:
     """Normalize comment style input to parser elements."""
+    if not HAS_PYPARSING:
+        raise ImportError(PYPARSING_IMPORT_ERROR)
+
     if isinstance(style, ParserElement):
         return [style]
 
@@ -65,7 +82,7 @@ def _ensure_parser_elements(
         return [parser]
 
     if isinstance(style, Sequence):
-        elements: List[ParserElement] = []
+        elements: List[Any] = []
         for item in style:
             elements.extend(_ensure_parser_elements(item))
         if not elements:
@@ -96,11 +113,15 @@ def strip_comments(
     :param bool strip_blank_lines: When ``True`` remove empty lines that
         remain after comment removal.
     :returns str: Text with comments stripped.
+    :raises ImportError: If pyparsing is not installed.
     :raises ValueError: If an unknown comment style is requested.
     :raises TypeError: If C(comment_style) is of an unsupported type.
     """
     if not text:
         return ""
+
+    if not HAS_PYPARSING:
+        raise ImportError(PYPARSING_IMPORT_ERROR)
 
     comment_elements = _ensure_parser_elements(comment_style)
 
