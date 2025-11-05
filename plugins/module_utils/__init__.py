@@ -41,7 +41,7 @@ from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # 
 from ansible_collections.o0_o.utils.plugins.module_utils.string_utils import (  # noqa: E501
     strip_comments,
 )
-from ansible_collections.o0_o.utils.plugins.module_utils.lookup_utils import (  # noqa: E501
+from ansible_collections.o0_o.utils.plugins.module_utils.vars_lookup_base import (  # noqa: E501
     VarsLookupBase,
 )
 

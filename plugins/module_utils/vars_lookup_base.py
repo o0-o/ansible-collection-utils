@@ -13,13 +13,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-
-from ansible.errors import AnsibleLookupError
-from ansible.plugins.lookup import LookupBase
+from typing import Any, Optional
 
 
-class VarsLookupBase(LookupBase):
+class VarsLookupBase:
     """Base class for lookup plugins that need to access variables.
 
     Provides a convenient lookup_var() method that retrieves variable
@@ -32,17 +29,14 @@ class VarsLookupBase(LookupBase):
     """
 
     def lookup_var(
-        self,
-        var_name: str,
-        host: Optional[str] = None,
-        **kwargs: Any
+        self, var_name: str, host: Optional[str] = None, **kwargs: Any
     ) -> Any:
-        """Look up a variable value from the templar's available variables.
+        """Look up a variable from the templar's available variables.
 
         This method accesses variables directly from the templar's
-        available variables, which includes facts and all other variables
-        from the play context. Can optionally access variables from a
-        specific host's hostvars.
+        available variables, which includes facts and all other
+        variables from the play context. Can optionally access
+        variables from a specific host's hostvars.
 
         :param str var_name: Name of the variable to look up
         :param Optional[str] host: Hostname to look up variables for.
@@ -50,14 +44,13 @@ class VarsLookupBase(LookupBase):
             up variables from hostvars[host]
         :param kwargs: Additional keyword arguments. Supports:
             - default: Default value to return if variable is not found
-              or any error occurs. If not provided, raises
-              AnsibleLookupError on failure. Can be any value including
-              None.
+              or any error occurs. If not provided, raises exceptions
+              on failure. Can be any value including None.
         :returns Any: The variable value or default if provided and
             variable not found
-        :raises AnsibleLookupError: If the variable cannot be accessed
-            and no default is provided, or if unexpected keyword arguments
-            are provided
+        :raises ValueError: If unexpected keyword arguments are provided
+        :raises KeyError: If the variable cannot be accessed and no
+            default is provided
         """
         # Extract default parameter if provided
         has_default = "default" in kwargs
@@ -66,7 +59,7 @@ class VarsLookupBase(LookupBase):
         # Validate no unexpected kwargs
         if kwargs:
             unexpected = ", ".join(sorted(kwargs.keys()))
-            raise AnsibleLookupError(
+            raise ValueError(
                 f"lookup_var() got unexpected keyword argument(s): "
                 f"{unexpected}"
             )
@@ -81,24 +74,23 @@ class VarsLookupBase(LookupBase):
                 if hostvars is None:
                     if has_default:
                         return default
-                    raise AnsibleLookupError(
+                    raise KeyError(
                         f"Cannot access host '{host}' variables: "
                         f"hostvars not available"
                     )
                 if host not in hostvars:
                     if has_default:
                         return default
-                    raise AnsibleLookupError(
-                        f"Host '{host}' not found in hostvars"
-                    )
+                    raise KeyError(f"Host '{host}' not found in hostvars")
                 host_vars = hostvars[host]
                 if var_name in host_vars:
                     return host_vars[var_name]
                 else:
                     if has_default:
                         return default
-                    raise AnsibleLookupError(
-                        f"No variable named '{var_name}' found for host '{host}'."
+                    raise KeyError(
+                        f"No variable named '{var_name}' found for "
+                        f"host '{host}'."
                     )
             # Otherwise use current host's variables
             else:
@@ -107,22 +99,22 @@ class VarsLookupBase(LookupBase):
                 else:
                     if has_default:
                         return default
-                    raise AnsibleLookupError(
+                    raise KeyError(
                         f"No variable named '{var_name}' was found."
                     )
-        except AnsibleLookupError:
+        except (ValueError, KeyError, TypeError):
             if has_default:
                 return default
             raise
         except AttributeError as e:
             if has_default:
                 return default
-            raise AnsibleLookupError(
+            raise AttributeError(
                 f"Failed to access templar's available variables: {e}"
             ) from e
         except Exception as e:
             if has_default:
                 return default
-            raise AnsibleLookupError(
+            raise RuntimeError(
                 f"Failed to access variable '{var_name}': {e}"
             ) from e

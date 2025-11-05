@@ -63,38 +63,66 @@ seealso:
 EXAMPLES = r"""
 - name: Look up current host's variable
   ansible.builtin.debug:
-    msg: "{{ lookup('o0_o.utils.var', 'ansible_distribution') }}"
+    msg: >-
+      {{ lookup('o0_o.utils.var', 'ansible_distribution') }}
 
 - name: Look up variable with default if not found
   ansible.builtin.set_fact:
-    app_version: "{{ lookup('o0_o.utils.var', 'custom_app_version', default='1.0.0') }}"
+    app_version: >-
+      {{ lookup('o0_o.utils.var',
+                'custom_app_version',
+                default='1.0.0') }}
 
 - name: Look up variable from another host
   ansible.builtin.debug:
-    msg: "{{ lookup('o0_o.utils.var', 'ansible_hostname', host='webserver1') }}"
+    msg: >-
+      {{ lookup('o0_o.utils.var',
+                'ansible_hostname',
+                host='webserver1') }}
 
 - name: Look up from another host with default
   ansible.builtin.set_fact:
-    remote_value: "{{ lookup('o0_o.utils.var', 'custom_var', host='appserver1', default='N/A') }}"
+    remote_value: >-
+      {{ lookup('o0_o.utils.var',
+                'custom_var',
+                host='appserver1',
+                default='N/A') }}
 
 - name: Check if variable exists on multiple hosts
   ansible.builtin.debug:
-    msg: "{{ item }}: {{ lookup('o0_o.utils.var', 'docker_installed', host=item, default=False) }}"
+    msg: >-
+      {{ item }}:
+      {{ lookup('o0_o.utils.var',
+                'docker_installed',
+                host=item,
+                default=False) }}
   loop: "{{ groups['all'] }}"
 
 - name: Use None as default
   ansible.builtin.set_fact:
-    maybe_value: "{{ lookup('o0_o.utils.var', 'optional_setting', default=None) }}"
+    maybe_value: >-
+      {{ lookup('o0_o.utils.var',
+                'optional_setting',
+                default=None) }}
 
 - name: Look up nested variable with default
   ansible.builtin.set_fact:
-    db_host: "{{ lookup('o0_o.utils.var', 'database', default={})['host'] | default('localhost') }}"
+    db_host: >-
+      {{ lookup('o0_o.utils.var',
+                'database',
+                default={})['host']
+         | default('localhost') }}
 
 - name: Get variable from each host in a group
   ansible.builtin.debug:
-    msg: "{{ lookup('o0_o.utils.var', 'service_port', host=item) }}"
+    msg: >-
+      {{ lookup('o0_o.utils.var', 'service_port', host=item) }}
   loop: "{{ groups['webservers'] }}"
-  when: lookup('o0_o.utils.var', 'service_port', host=item, default=None) is not none
+  when: >-
+    lookup('o0_o.utils.var',
+           'service_port',
+           host=item,
+           default=None) is not none
 """
 
 RETURN = r"""
@@ -107,16 +135,13 @@ _raw:
   type: raw
 """
 
-from typing import Any
-
 from ansible.errors import AnsibleLookupError
+from ansible.plugins.lookup import LookupBase
 
-from ansible_collections.o0_o.utils.plugins.module_utils.lookup_utils import (
-    VarsLookupBase,
-)
+from ansible_collections.o0_o.utils.plugins.module_utils import VarsLookupBase
 
 
-class LookupModule(VarsLookupBase):
+class LookupModule(VarsLookupBase, LookupBase):
     """Look up variable with optional default and host parameters."""
 
     def run(self, terms, variables=None, **kwargs):
@@ -139,14 +164,17 @@ class LookupModule(VarsLookupBase):
             # Look up the variable
             try:
                 if has_default:
-                    value = self.lookup_var(term, host=host, default=default, **kwargs)
+                    value = self.lookup_var(
+                        term, host=host, default=default, **kwargs
+                    )
                 else:
                     value = self.lookup_var(term, host=host, **kwargs)
                 ret.append(value)
-            except AnsibleLookupError:
+            except (ValueError, KeyError, AttributeError, RuntimeError) as e:
+                # Convert generic exceptions to AnsibleLookupError
                 if has_default:
                     ret.append(default)
                 else:
-                    raise
+                    raise AnsibleLookupError(str(e)) from e
 
         return ret
