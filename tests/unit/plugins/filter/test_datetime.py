@@ -117,7 +117,7 @@ def test_datetime_raises_on_import_error(
 def test_datetime_raises_on_unexpected_error(
     monkeypatch: pytest.MonkeyPatch, filter_module: FilterModule
 ) -> None:
-    """Filter should raise AnsibleFilterError for unexpected failures."""
+    """Filter raises AnsibleFilterError for unexpected failures."""
 
     def boom(*args: Any, **kwargs: Any) -> None:
         raise RuntimeError("unexpected error")

@@ -242,7 +242,7 @@ def test_generate_random_hostname_uniqueness() -> None:
     """Test that multiple generated hostnames are unique."""
     # Generate 100 hostnames and verify they're all different
     hostnames = [generate_random_hostname() for i in range(100)]
-    # Should be highly unlikely to get duplicates with 16-char random strings
+    # Should be highly unlikely to get duplicates with 16-char
     assert len(set(hostnames)) == 100
 
 

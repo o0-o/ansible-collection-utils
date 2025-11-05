@@ -52,10 +52,10 @@ __all__ = ["parse_hostname", "generate_random_hostname"]
 
 
 def generate_random_hostname(length: int = 16) -> str:
-    """Generate a cryptographically secure random RFC-compliant hostname.
+    """Generate cryptographically secure RFC-compliant hostname.
 
-    Creates a random hostname using lowercase ASCII letters only, ensuring
-    RFC compliance by:
+    Creates a random hostname using lowercase ASCII letters only,
+    ensuring RFC compliance by:
     - Starting with a letter (not a digit)
     - Containing only lowercase letters
     - Having specified length (default 16 characters)

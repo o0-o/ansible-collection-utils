@@ -75,7 +75,7 @@ def parse_datetime(date_str: str) -> Optional[Dict[str, Any]]:
 
 
 def _parse_with_dateutil(date_str: str) -> Optional[Tuple[datetime, Any]]:
-    """Parse string with python-dateutil and expose raw precision data."""
+    """Parse string with python-dateutil and expose raw precision."""
     if not HAS_DATEUTIL:
         raise ImportError(
             "python-dateutil is required for date parsing. "
@@ -286,7 +286,8 @@ def parse_date_to_epoch(date_str: str) -> Optional[int]:
     parse_datetime() for more comprehensive output.
 
     :param str date_str: Date string to parse
-    :returns Optional[int]: Unix epoch timestamp or None if parsing fails
+    :returns Optional[int]: Unix epoch timestamp or None if parsing
+        fails
     :raises ImportError: If python-dateutil is not available
     """
     result = parse_datetime(date_str)
@@ -370,13 +371,14 @@ def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
         {'seconds': 2730, 'pretty': '45 minutes, 30 seconds',
          'iso8601': 'PT45M30S'}
         >>> parse_elapsed_time("1:23:45")
-        {'seconds': 5025, 'pretty': '1 hour, 23 minutes, 45 seconds', ...}
+        {'seconds': 5025, 'pretty': '1 hour, 23 minutes, 45 ...}
         >>> parse_elapsed_time("2-03:45:12")
-        {'seconds': 186312, 'pretty': '2 days, 3 hours, 45 minutes, ...}
+        {'seconds': 186312, 'pretty': '2 days, 3 hours, ...}
 
-    :param str elapsed_str: Elapsed time string in ps etime format
-    :returns Optional[Dict[str, Any]]: Dict with 'seconds' (int), 'pretty'
-        (str), and 'iso8601' (str) keys, or None if parsing fails
+    :param str elapsed_str: Elapsed time in ps etime format
+    :returns Optional[Dict[str, Any]]: Dict with 'seconds' (int),
+        'pretty' (str), and 'iso8601' (str) keys, or None if
+        parsing fails
     """
     if not elapsed_str:
         return None

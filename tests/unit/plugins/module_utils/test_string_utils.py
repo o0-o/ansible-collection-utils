@@ -56,7 +56,7 @@ def test_strip_comments_preserve_blank_lines() -> None:
 /bin/fish"""
 
     result = strip_comments(content, strip_blank_lines=False)
-    # Comment removal leaves blank line, plus original blank line = 2 blanks
+    # Comment removal leaves blank line, plus original = 2 blanks
     assert result.splitlines() == ["/bin/bash", "", "", "/bin/fish"]
 
 

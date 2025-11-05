@@ -173,9 +173,10 @@ class FilterModule(object):
 
         :param str date_str: Date/time string in any common format
         :returns Optional[Dict[str, Any]]: Dict with epoch, iso8601,
-            offset (if tz), and pretty fields, or None if parsing fails
-        :raises AnsibleFilterError: If required date parsing libraries are
-            not available
+            offset (if tz), and pretty fields, or None if parsing
+            fails
+        :raises AnsibleFilterError: If required date parsing
+            libraries are not available
         """
         try:
             return parse_datetime(date_str)
