@@ -1,0 +1,71 @@
+objects:
+  role: {}
+plugins:
+  become: {}
+  cache: {}
+  callback: {}
+  cliconf: {}
+  connection: {}
+  filter:
+    datetime:
+      description: Parse date/time strings to structured datetime dict
+      name: datetime
+      version_added: 1.5.0
+    dict2items:
+      description: Convert dictionary to list of item mappings
+      name: dict2items
+      version_added: 1.5.0
+    hostname:
+      description: Parse and structure hostname strings
+      name: hostname
+      version_added: 1.0.0
+    items2dict:
+      description: Convert list of mapping entries to a dictionary
+      name: items2dict
+      version_added: 1.5.0
+    lines2items:
+      description: Split string input into a list of lines
+      name: lines2items
+      version_added: 1.5.0
+    rekey:
+      description: Change dictionary keys to values of nested fields
+      name: rekey
+      version_added: 1.5.0
+    si:
+      description: Parse values with SI or IEC unit prefixes
+      name: si
+      version_added: 1.1.0
+    splitlines:
+      description: Split string input into a list of lines
+      name: splitlines
+      version_added: 1.5.0
+    string2items:
+      description: Convert a delimited string into a list of items
+      name: string2items
+      version_added: 1.3.0
+    strip_comments:
+      description: Remove comments from multiline text
+      name: strip_comments
+      version_added: 1.5.0
+    truthy_or_integer:
+      description: Interpret input as integer or boolean
+      name: truthy_or_integer
+      version_added: 1.5.0
+    wantlist:
+      description: Ensure value is a list or simplify lists
+      name: wantlist
+      version_added: 1.3.0
+  httpapi: {}
+  inventory: {}
+  lookup:
+    var:
+      description: Look up variable with optional default and host parameters
+      name: var
+      version_added: 1.7.0
+  module: {}
+  netconf: {}
+  shell: {}
+  strategy: {}
+  test: {}
+  vars: {}
+version: 1.7.0

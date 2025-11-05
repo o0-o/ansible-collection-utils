@@ -4,6 +4,30 @@ o0\_o.utils Release Notes
 
 .. contents:: Topics
 
+v1.7.0
+======
+
+Major Changes
+-------------
+
+- Added ``o0_o.utils.var`` lookup plugin for flexible variable lookups with optional ``host`` and ``default`` parameters. The ``host`` parameter allows accessing variables from other hosts' hostvars, while ``default`` provides graceful fallback values when variables are not found.
+
+Minor Changes
+-------------
+
+- VarsLookupBase - Added ``default`` parameter to ``lookup_var()`` method for graceful handling of missing variables without raising errors.
+- VarsLookupBase - Added ``host`` parameter to ``lookup_var()`` method for cross-host variable lookups via hostvars.
+- VarsLookupBase - Added kwargs validation to detect typos and invalid parameters early with clear error messages.
+- VarsLookupBase - Changed from ``AnsibleError`` to ``AnsibleLookupError`` for more semantically correct exception handling in lookup plugins.
+
+New Plugins
+-----------
+
+Lookup
+~~~~~~
+
+- o0_o.utils.var - Look up variable with optional default and host parameters
+
 v1.6.0
 ======
 

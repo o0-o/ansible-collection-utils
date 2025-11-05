@@ -358,3 +358,107 @@ def format_epoch_timestamp(
         pass
 
     return result
+
+
+def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
+    """Parse elapsed time string from ps etime format.
+
+    The ps etime format is: [[DD-]HH:]MM:SS
+
+    Examples:
+        >>> parse_elapsed_time("45:30")
+        {'seconds': 2730, 'pretty': '45 minutes, 30 seconds',
+         'iso8601': 'PT45M30S'}
+        >>> parse_elapsed_time("1:23:45")
+        {'seconds': 5025, 'pretty': '1 hour, 23 minutes, 45 seconds', ...}
+        >>> parse_elapsed_time("2-03:45:12")
+        {'seconds': 186312, 'pretty': '2 days, 3 hours, 45 minutes, ...}
+
+    :param str elapsed_str: Elapsed time string in ps etime format
+    :returns Optional[Dict[str, Any]]: Dict with 'seconds' (int), 'pretty'
+        (str), and 'iso8601' (str) keys, or None if parsing fails
+    """
+    if not elapsed_str:
+        return None
+
+    elapsed_str = elapsed_str.strip()
+    if not elapsed_str:
+        return None
+
+    try:
+        days = 0
+        hours = 0
+        minutes = 0
+        seconds = 0
+
+        # Check for days component (DD-HH:MM:SS)
+        if "-" in elapsed_str:
+            day_part, time_part = elapsed_str.split("-", 1)
+            days = int(day_part)
+            elapsed_str = time_part
+
+        # Split time components by colon
+        time_parts = elapsed_str.split(":")
+
+        if len(time_parts) == 3:
+            # HH:MM:SS format
+            hours = int(time_parts[0])
+            minutes = int(time_parts[1])
+            seconds = int(time_parts[2])
+        elif len(time_parts) == 2:
+            # MM:SS format
+            minutes = int(time_parts[0])
+            seconds = int(time_parts[1])
+        else:
+            # Invalid format
+            return None
+
+        # Calculate total seconds
+        total_seconds = days * 86400 + hours * 3600 + minutes * 60 + seconds
+
+        # Build pretty format
+        pretty_parts = []
+        if days > 0:
+            pretty_parts.append(f"{days} day{'s' if days != 1 else ''}")
+        if hours > 0:
+            pretty_parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+        if minutes > 0:
+            pretty_parts.append(
+                f"{minutes} minute{'s' if minutes != 1 else ''}"
+            )
+        if seconds > 0 or not pretty_parts:
+            pretty_parts.append(
+                f"{seconds} second{'s' if seconds != 1 else ''}"
+            )
+        pretty = ", ".join(pretty_parts)
+
+        # Build ISO 8601 duration format (P[n]DT[n]H[n]M[n]S)
+        iso_parts = []
+        if days > 0:
+            iso_parts.append(f"{days}D")
+
+        time_parts_iso = []
+        if hours > 0:
+            time_parts_iso.append(f"{hours}H")
+        if minutes > 0:
+            time_parts_iso.append(f"{minutes}M")
+        if seconds > 0 or (days == 0 and hours == 0 and minutes == 0):
+            time_parts_iso.append(f"{seconds}S")
+
+        if iso_parts or time_parts_iso:
+            iso = "P"
+            if iso_parts:
+                iso += "".join(iso_parts)
+            if time_parts_iso:
+                iso += "T" + "".join(time_parts_iso)
+        else:
+            iso = "PT0S"
+
+        return {
+            "seconds": total_seconds,
+            "pretty": pretty,
+            "iso8601": iso,
+        }
+
+    except (ValueError, AttributeError):
+        return None

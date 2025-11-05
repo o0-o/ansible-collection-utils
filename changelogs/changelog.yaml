@@ -133,3 +133,27 @@ releases:
     - strip_comments_helper.yml
     - timezone_support.yml
     release_date: '2025-11-01'
+  1.7.0:
+    changes:
+      major_changes:
+      - Added ``o0_o.utils.var`` lookup plugin for flexible variable lookups with
+        optional ``host`` and ``default`` parameters. The ``host`` parameter allows
+        accessing variables from other hosts' hostvars, while ``default`` provides
+        graceful fallback values when variables are not found.
+      minor_changes:
+      - VarsLookupBase - Added ``default`` parameter to ``lookup_var()`` method for
+        graceful handling of missing variables without raising errors.
+      - VarsLookupBase - Added ``host`` parameter to ``lookup_var()`` method for cross-host
+        variable lookups via hostvars.
+      - VarsLookupBase - Added kwargs validation to detect typos and invalid parameters
+        early with clear error messages.
+      - VarsLookupBase - Changed from ``AnsibleError`` to ``AnsibleLookupError`` for
+        more semantically correct exception handling in lookup plugins.
+    fragments:
+    - lookup_var_plugin.yml
+    plugins:
+      lookup:
+      - description: Look up variable with optional default and host parameters
+        name: var
+        namespace: null
+    release_date: '2025-11-04'
