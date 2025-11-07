@@ -19,7 +19,7 @@ html_title = "o0_o.utils documentation"
 html_short_title = "o0_o.utils"
 html_baseurl = "https://o0-o.github.io/ansible-collection-utils/"
 
-root_doc = "generated/index"
+root_doc = "index"
 master_doc = root_doc
 
 extensions = [

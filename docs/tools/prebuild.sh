@@ -41,3 +41,6 @@ antsibull-docs \
 
 # Drop redundant docsite tree to avoid toctree misreferences.
 rm -rf "${GENERATED_DIR}/docsite"
+
+# Copy the generated index.rst to the root for GitHub Pages.
+cp "${GENERATED_DIR}/index.rst" "${SOURCE_DIR}/index.rst"
