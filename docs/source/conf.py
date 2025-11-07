@@ -51,5 +51,4 @@ nitpicky = True
 exclude_patterns = [
     "_build",
     "build",
-    "index.rst",
 ]
