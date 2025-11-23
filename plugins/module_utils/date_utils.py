@@ -41,10 +41,6 @@ def parse_datetime(date_str: str) -> Optional[Dict[str, Any]]:
     if raw.microsecond not in (None, 0):
         result["microseconds"] = raw.microsecond
 
-    iso8601 = _format_iso8601(dt, raw)
-    if iso8601 is not None:
-        result["iso8601"] = iso8601
-
     if raw.year is not None:
         result["seconds"] = int(dt.timestamp())
     elif raw.month is not None:
@@ -62,10 +58,6 @@ def parse_datetime(date_str: str) -> Optional[Dict[str, Any]]:
         result["seconds"] = (
             dt - dt.replace(hour=0, minute=0, second=0, microsecond=0)
         ).total_seconds()
-
-    offset_seconds = _calc_offset_seconds(dt, raw)
-    if offset_seconds is not None:
-        result["offset"] = offset_seconds
 
     cmos = _format_cmos(dt, raw)
     if cmos:
@@ -103,31 +95,6 @@ def _parse_with_dateutil(date_str: str) -> Optional[Tuple[datetime, Any]]:
     return dt, raw
 
 
-def _calc_offset_seconds(dt: datetime, raw: Any) -> Optional[int]:
-    """Determine timezone offset in seconds, if available."""
-    if raw.tzoffset is None and raw.tzname is None:
-        return None
-
-    if raw.tzoffset is not None:
-        return int(raw.tzoffset)
-
-    offset = dt.utcoffset()
-    if offset is not None:
-        return int(offset.total_seconds())
-
-    return None
-
-
-def _timezone_suffix(dt: datetime, raw: Any) -> str:
-    """Return ISO suffix for timezone offset."""
-    offset_seconds = _calc_offset_seconds(dt, raw)
-    if offset_seconds is None:
-        return None
-    if offset_seconds == 0:
-        return "Z"
-    return _format_offset_value(offset_seconds)
-
-
 def _format_offset_value(offset_seconds: int) -> str:
     """Convert an offset in seconds to ±HH:MM format."""
     sign = "+" if offset_seconds >= 0 else "-"
@@ -154,46 +121,6 @@ def _format_tz_name(dt: datetime, raw: Any) -> str:
         return "UTC"
 
     return f"UTC{_format_offset_value(int(raw.tzoffset))}"
-
-
-def _format_iso8601(dt: datetime, raw: any) -> Optional[str]:
-    """Construct ISO representation with the observed precision."""
-    date_part: Optional[str] = None
-
-    if raw.year is not None:
-        if raw.month is not None:
-            if raw.day is not None:
-                date_part = f"{dt.year:04d}-{dt.month:02d}-{dt.day:02d}"
-            else:
-                date_part = f"{dt.year:04d}-{dt.month:02d}"
-        else:
-            date_part = f"{dt.year:04d}"
-    elif raw.month is not None:
-        if raw.day is not None:
-            date_part = f"--{dt.month:02d}-{dt.day:02d}"
-        else:
-            date_part = f"--{dt.month:02d}"
-
-    time_part: Optional[str] = None
-    if raw.hour is not None and raw.minute is not None:
-        if raw.second is not None or raw.microsecond is not None:
-            if raw.microsecond is not None:
-                time_part = dt.strftime("%H:%M:%S.%f").rstrip("0").rstrip(".")
-            else:
-                time_part = dt.strftime("%H:%M:%S")
-        else:
-            time_part = dt.strftime("%H:%M")
-        tz_suffix = _timezone_suffix(dt, raw)
-        if tz_suffix is not None:
-            time_part = f"{time_part}{tz_suffix}"
-
-    if date_part and time_part:
-        return f"{date_part}T{time_part}"
-    if time_part:
-        return time_part
-    if date_part:
-        return date_part
-    return None
 
 
 def _format_cmos(dt: datetime, raw: Any) -> str:
@@ -307,14 +234,15 @@ def format_epoch_timestamp(
     :param float timestamp: Unix timestamp (seconds since epoch)
     :param bool include_microseconds: Include microseconds in output
     :param Optional[timezone] tz: Timezone for conversion (defaults to
-        UTC)
-    :returns Dict[str, Any]: Dictionary with 'seconds', 'iso8601',
-        'pretty', and 'offset' keys
+        local system timezone)
+    :returns Dict[str, Any]: Dictionary with 'seconds' and 'pretty'
+        keys
     """
     result: Dict[str, Any] = {"seconds": int(timestamp)}
 
     if tz is None:
-        tz = timezone.utc
+        # Use local system timezone by default
+        tz = datetime.now().astimezone().tzinfo
 
     try:
         dt = datetime.fromtimestamp(timestamp, tz=tz)
@@ -341,15 +269,9 @@ def format_epoch_timestamp(
         raw = RawTimestamp(dt, include_microseconds, offset_seconds)
 
         # Use existing formatting functions
-        iso8601 = _format_iso8601(dt, raw)
-        if iso8601:
-            result["iso8601"] = iso8601
-
         pretty = _format_cmos(dt, raw)
         if pretty:
             result["pretty"] = pretty
-
-        result["offset"] = offset_seconds
 
         if include_microseconds and dt.microsecond > 0:
             result["microseconds"] = dt.microsecond
