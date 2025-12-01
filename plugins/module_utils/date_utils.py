@@ -386,3 +386,42 @@ def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
 
     except (ValueError, AttributeError):
         return None
+
+
+def format_elapsed_seconds(total_seconds: int) -> Dict[str, Any]:
+    """Format elapsed seconds to human-readable format.
+
+    Takes seconds as input and produces a structured output with
+    the raw seconds value and a human-readable pretty string.
+
+    Examples:
+        >>> format_elapsed_seconds(2730)
+        {'seconds': 2730, 'pretty': '45 minutes, 30 seconds'}
+        >>> format_elapsed_seconds(186312)
+        {'seconds': 186312, 'pretty': '2 days, 3 hours, ...'}
+
+    :param int total_seconds: Elapsed time in seconds
+    :returns Dict[str, Any]: Dict with 'seconds' (int) and
+        'pretty' (str) keys
+    """
+    # Decompose seconds into days, hours, minutes, seconds
+    days, remainder = divmod(total_seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Build pretty format
+    pretty_parts = []
+    if days > 0:
+        pretty_parts.append(f"{days} day{'s' if days != 1 else ''}")
+    if hours > 0:
+        pretty_parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+    if minutes > 0:
+        pretty_parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
+    if seconds > 0 or not pretty_parts:
+        pretty_parts.append(f"{seconds} second{'s' if seconds != 1 else ''}")
+    pretty = ", ".join(pretty_parts)
+
+    return {
+        "seconds": total_seconds,
+        "pretty": pretty,
+    }

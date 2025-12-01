@@ -16,6 +16,7 @@ from __future__ import annotations
 from datetime import timezone, timedelta
 
 from ansible_collections.o0_o.utils.plugins.module_utils import (
+    format_elapsed_seconds,
     format_epoch_timestamp,
     parse_datetime,
     parse_date_to_epoch,
@@ -31,22 +32,20 @@ class TestParseDatetime:
         result = parse_datetime("01/15/2025")
         assert result is not None
         assert "seconds" in result
-        assert result["iso8601"] == "2025-01-15"
         assert "January 15, 2025" in result["pretty"]
         assert "offset" not in result  # No timezone
+        assert "iso8601" not in result
 
         # YYYY-MM-DD format
         result = parse_datetime("2025-01-15")
         assert result is not None
         assert "seconds" in result
-        assert result["iso8601"] == "2025-01-15"
 
     def test_datetime_without_seconds(self) -> None:
         """Test parsing datetime without seconds."""
         result = parse_datetime("2025-01-15 14:30")
         assert result is not None
         assert "seconds" in result
-        assert result["iso8601"] == "2025-01-15T14:30"
         assert "2:30 p.m." in result["pretty"]
 
     def test_datetime_with_seconds(self) -> None:
@@ -54,7 +53,6 @@ class TestParseDatetime:
         result = parse_datetime("2025-01-15 14:30:45")
         assert result is not None
         assert "seconds" in result
-        assert result["iso8601"] == "2025-01-15T14:30:45"
         assert "2:30:45 p.m." in result["pretty"]
 
     def test_time_only_formats(self) -> None:
@@ -65,7 +63,6 @@ class TestParseDatetime:
         assert "seconds" in result
         # Should be seconds since midnight: 14*3600 + 30*60 = 52200
         assert result["seconds"] == 52200
-        assert result["iso8601"] == "14:30"
         assert "2:30 p.m." in result["pretty"]
 
         # 12-hour format with PM
@@ -88,18 +85,14 @@ class TestParseDatetime:
         assert result is not None
         # Should be seconds since midnight: 14*3600 + 30*60 + 45 = 52245
         assert result["seconds"] == 52245
-        assert result["iso8601"] == "14:30:45"
         assert "2:30:45 p.m." in result["pretty"]
 
     def test_datetime_with_timezone(self) -> None:
         """Test parsing datetime with timezone info."""
-        # Offset is returned as integer seconds
-        # -05:00 = -5 hours * 3600 seconds/hour = -18000 seconds
         result = parse_datetime("2025-01-15T14:30:00-05:00")
         assert result is not None
         assert "seconds" in result
-        assert "offset" in result
-        assert result["offset"] == -18000
+        assert "offset" not in result  # Offset field removed
 
     def test_pretty_format_date_only(self) -> None:
         """Test CMOS formatting for date-only."""
@@ -176,8 +169,8 @@ class TestFormatEpochTimestamp:
         result = format_epoch_timestamp(timestamp)
 
         assert result["seconds"] == 1736953845
-        assert result["iso8601"] == "2025-01-15T15:10:45Z"
-        assert result["offset"] == 0
+        assert "iso8601" not in result  # Field removed
+        assert "offset" not in result  # Field removed
         assert "January 15, 2025" in result["pretty"]
         assert "3:10:45 p.m." in result["pretty"]
 
@@ -189,9 +182,8 @@ class TestFormatEpochTimestamp:
         result = format_epoch_timestamp(timestamp, tz=est)
 
         assert result["seconds"] == 1736953845
-        # Time should be adjusted to EST
-        assert result["iso8601"] == "2025-01-15T10:10:45-05:00"
-        assert result["offset"] == -18000  # -5 hours in seconds
+        assert "iso8601" not in result  # Field removed
+        assert "offset" not in result  # Field removed
         assert "January 15, 2025" in result["pretty"]
         assert "10:10:45 a.m." in result["pretty"]
 
@@ -203,9 +195,8 @@ class TestFormatEpochTimestamp:
         result = format_epoch_timestamp(timestamp, tz=aedt)
 
         assert result["seconds"] == 1736953845
-        # Time should be adjusted to AEDT (next day)
-        assert result["iso8601"] == "2025-01-16T02:10:45+11:00"
-        assert result["offset"] == 39600  # +11 hours in seconds
+        assert "iso8601" not in result  # Field removed
+        assert "offset" not in result  # Field removed
         assert "January 16, 2025" in result["pretty"]
         assert "2:10:45 a.m." in result["pretty"]
 
@@ -216,7 +207,7 @@ class TestFormatEpochTimestamp:
 
         assert result["seconds"] == 1736953845
         assert result["microseconds"] == 123456
-        assert "iso8601" in result
+        assert "pretty" in result
 
     def test_format_timestamp_without_microseconds(self) -> None:
         """Test that microseconds are not included by default."""
@@ -251,3 +242,87 @@ class TestParseDateToEpoch:
 
         result = parse_date_to_epoch("")
         assert result is None
+
+
+class TestFormatElapsedSeconds:
+    """Test format_elapsed_seconds utility function."""
+
+    def test_seconds_only(self) -> None:
+        """Test formatting seconds-only durations."""
+        result = format_elapsed_seconds(45)
+        assert result["seconds"] == 45
+        assert result["pretty"] == "45 seconds"
+
+    def test_singular_second(self) -> None:
+        """Test singular form for 1 second."""
+        result = format_elapsed_seconds(1)
+        assert result["pretty"] == "1 second"
+
+    def test_minutes_and_seconds(self) -> None:
+        """Test formatting minutes and seconds."""
+        result = format_elapsed_seconds(2730)  # 45:30
+        assert result["seconds"] == 2730
+        assert result["pretty"] == "45 minutes, 30 seconds"
+
+    def test_singular_minute(self) -> None:
+        """Test singular form for 1 minute."""
+        result = format_elapsed_seconds(60)
+        assert result["pretty"] == "1 minute"
+
+    def test_hours_minutes_seconds(self) -> None:
+        """Test formatting hours, minutes, and seconds."""
+        result = format_elapsed_seconds(5025)  # 1:23:45
+        assert result["seconds"] == 5025
+        assert result["pretty"] == "1 hour, 23 minutes, 45 seconds"
+
+    def test_singular_hour(self) -> None:
+        """Test singular form for 1 hour."""
+        result = format_elapsed_seconds(3600)
+        assert result["pretty"] == "1 hour"
+
+    def test_days_hours_minutes_seconds(self) -> None:
+        """Test formatting days, hours, minutes, and seconds."""
+        result = format_elapsed_seconds(186312)  # 2-03:45:12
+        assert result["seconds"] == 186312
+        assert result["pretty"] == "2 days, 3 hours, 45 minutes, 12 seconds"
+
+    def test_singular_day(self) -> None:
+        """Test singular form for 1 day."""
+        result = format_elapsed_seconds(86400)
+        assert result["pretty"] == "1 day"
+
+    def test_zero_seconds(self) -> None:
+        """Test formatting zero seconds."""
+        result = format_elapsed_seconds(0)
+        assert result["seconds"] == 0
+        assert result["pretty"] == "0 seconds"
+
+    def test_exact_hour(self) -> None:
+        """Test formatting an exact hour with no minutes or seconds."""
+        result = format_elapsed_seconds(7200)  # 2 hours
+        assert result["pretty"] == "2 hours"
+
+    def test_exact_day(self) -> None:
+        """Test formatting an exact day with no other components."""
+        result = format_elapsed_seconds(172800)  # 2 days
+        assert result["pretty"] == "2 days"
+
+    def test_day_and_seconds_only(self) -> None:
+        """Test formatting days and seconds without hours/minutes."""
+        result = format_elapsed_seconds(86430)  # 1 day + 30 seconds
+        assert result["pretty"] == "1 day, 30 seconds"
+
+    def test_roundtrip_with_parse_elapsed_time(self) -> None:
+        """Test format_elapsed_seconds inverts parse_elapsed_time."""
+        from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # noqa: E501
+            parse_elapsed_time,
+        )
+
+        # Test various input strings
+        test_cases = ["45:30", "1:23:45", "2-03:45:12", "0:00:01"]
+        for elapsed_str in test_cases:
+            parsed = parse_elapsed_time(elapsed_str)
+            assert parsed is not None
+            formatted = format_elapsed_seconds(parsed["seconds"])
+            assert formatted["seconds"] == parsed["seconds"]
+            assert formatted["pretty"] == parsed["pretty"]

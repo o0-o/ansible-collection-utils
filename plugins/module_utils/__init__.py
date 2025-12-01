@@ -26,6 +26,7 @@ from ansible_collections.o0_o.utils.plugins.module_utils.si_utils import (  # no
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.truthy_utils import (  # noqa: E501
     truthy_or_integer,
+    truthy_or_string,
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # noqa: E501
     dict2items,
@@ -33,6 +34,7 @@ from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # 
     rekey,
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # noqa: E501
+    format_elapsed_seconds,
     format_epoch_timestamp,
     parse_date_to_epoch,
     parse_datetime,
@@ -52,9 +54,11 @@ __all__ = [
     "wantlist",
     "parse_si",
     "truthy_or_integer",
+    "truthy_or_string",
     "items2dict",
     "dict2items",
     "rekey",
+    "format_elapsed_seconds",
     "format_epoch_timestamp",
     "parse_date_to_epoch",
     "parse_datetime",
