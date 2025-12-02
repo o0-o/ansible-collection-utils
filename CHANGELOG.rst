@@ -4,6 +4,14 @@ o0\_o.utils Release Notes
 
 .. contents:: Topics
 
+v2.0.0
+======
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- datetime filter and parse_datetime() function now return simplified dictionaries with only 'seconds', 'pretty', and optionally 'microseconds' fields. The 'iso8601' and 'offset' fields have been removed to reduce output size. Users needing ISO 8601 formatted strings or timezone offsets can generate these on-demand using appropriate filters.
+
 v1.7.0
 ======
 

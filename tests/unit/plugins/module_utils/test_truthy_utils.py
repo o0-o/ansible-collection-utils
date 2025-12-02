@@ -19,6 +19,7 @@ import pytest
 
 from ansible_collections.o0_o.utils.plugins.module_utils import (
     truthy_or_integer,
+    truthy_or_string,
 )
 
 
@@ -71,3 +72,85 @@ def test_only_positive_rejects_zero_without_override() -> None:
     """Zero fails when only_positive is true without zero_is_false."""
     with pytest.raises(ValueError, match="received 0"):
         truthy_or_integer(0, only_positive=True)
+
+
+@pytest.mark.parametrize(
+    "value,valid_strings,expected",
+    [
+        ("auto", ["auto", "detect"], "auto"),
+        ("AUTO", ["auto", "detect"], "auto"),
+        ("Auto", ["auto", "detect"], "auto"),
+        ("detect", ["auto", "detect"], "detect"),
+        ("DETECT", ["auto", "detect"], "detect"),
+        ("recursive", ["recursive"], "recursive"),
+        ("RECURSIVE", ["recursive"], "recursive"),
+    ],
+)
+def test_string_match_preference(
+    value: str, valid_strings: list[str], expected: str
+) -> None:
+    """Valid strings should return their lowercase canonical form."""
+    result = truthy_or_string(value, valid_strings)
+    assert result == expected
+    assert isinstance(result, str)
+
+
+@pytest.mark.parametrize(
+    "value,valid_strings,expected",
+    [
+        ("yes", ["auto"], True),
+        ("no", ["auto"], False),
+        ("true", ["recursive"], True),
+        ("false", ["recursive"], False),
+        ("1", ["auto"], True),
+        ("0", ["auto"], False),
+        (True, ["auto"], True),
+        (False, ["auto"], False),
+    ],
+)
+def test_boolean_fallback_when_no_match(
+    value: Any, valid_strings: list[str], expected: bool
+) -> None:
+    """Boolean-like values should fall back to boolean conversion."""
+    result = truthy_or_string(value, valid_strings)
+    assert result == expected
+    assert isinstance(result, bool)
+
+
+def test_non_matching_string_raises_error() -> None:
+    """Test non-matching strings raise ValueError."""
+    with pytest.raises(
+        ValueError,
+        match=r"Unable to interpret 'invalid' as boolean",
+    ):
+        truthy_or_string("invalid", ["auto", "detect"])
+
+
+def test_recurse_typo_raises_error() -> None:
+    """Test typo 'recurse' instead of 'recursive' raises error."""
+    with pytest.raises(
+        ValueError,
+        match=r"Unable to interpret 'recurse' as boolean",
+    ):
+        truthy_or_string("recurse", ["recursive"])
+
+
+def test_object_value_raises_error() -> None:
+    """Object values should raise ValueError."""
+    with pytest.raises(
+        ValueError,
+        match=r"Unable to interpret .* as boolean or one of the valid strings",
+    ):
+        truthy_or_string(object(), ["auto"])
+
+
+def test_case_insensitive_matching() -> None:
+    """String matching should be case-insensitive."""
+    result = truthy_or_string("ReCuRsIvE", ["recursive"])
+    assert result == "recursive"
+
+
+def test_returns_lowercase_canonical() -> None:
+    """Matched strings should always be returned in lowercase."""
+    result = truthy_or_string("AUTO", ["AuTo"])
+    assert result == "auto"

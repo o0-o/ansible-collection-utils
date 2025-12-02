@@ -74,7 +74,6 @@ def test_datetime_date_only_format(filter_module: FilterModule) -> None:
     result = filter_module.datetime_filter("2025-01-15")
     assert result is not None
     assert "seconds" in result
-    assert result["iso8601"] == "2025-01-15"
     assert "2025" in result["pretty"]
 
 
@@ -83,7 +82,6 @@ def test_datetime_time_only_format(filter_module: FilterModule) -> None:
     result = filter_module.datetime_filter("14:30")
     assert result is not None
     assert "seconds" in result
-    assert result["iso8601"] == "14:30"
     assert "2:30 p.m." in result["pretty"]
 
 
@@ -92,7 +90,6 @@ def test_datetime_full_datetime_format(filter_module: FilterModule) -> None:
     result = filter_module.datetime_filter("2025-01-15 14:30:45")
     assert result is not None
     assert "seconds" in result
-    assert result["iso8601"] == "2025-01-15T14:30:45"
     assert "2:30:45 p.m." in result["pretty"]
 
 

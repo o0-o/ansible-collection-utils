@@ -25,7 +25,7 @@ short_description: Parse date/time strings to structured datetime dict
 version_added: "1.5.0"
 description:
   - Parse date/time strings in any common format to structured dict
-  - Returns dict with seconds, iso8601, offset (if timezone), and pretty
+  - Returns dict with seconds and pretty fields
   - Seconds is epoch timestamp for dates, seconds since midnight for time-only
   - Pretty format follows Chicago Manual of Style (CMOS)
   - Only includes precision present in the input string
@@ -50,7 +50,6 @@ EXAMPLES = r"""
   # Output:
   # {
   #   "seconds": 1736899200,
-  #   "iso8601": "2025-01-15",
   #   "pretty": "Wednesday, January 15, 2025"
   # }
 
@@ -61,7 +60,6 @@ EXAMPLES = r"""
   # Output:
   # {
   #   "seconds": 1736951400,
-  #   "iso8601": "2025-01-15T14:30",
   #   "pretty": "Wednesday, January 15, 2025, 2:30 p.m."
   # }
 
@@ -72,7 +70,6 @@ EXAMPLES = r"""
   # Output:
   # {
   #   "seconds": 1736951445,
-  #   "iso8601": "2025-01-15T14:30:45",
   #   "pretty": "Wednesday, January 15, 2025, 2:30:45 p.m."
   # }
 
@@ -83,8 +80,6 @@ EXAMPLES = r"""
   # Output:
   # {
   #   "seconds": 1736969400,
-  #   "iso8601": "2025-01-15T14:30:00-05:00",
-  #   "offset": -18000,
   #   "pretty": "Wednesday, January 15, 2025, 2:30 p.m. UTC-05:00"
   # }
 
@@ -95,7 +90,6 @@ EXAMPLES = r"""
   # Output:
   # {
   #   "seconds": 53100,
-  #   "iso8601": "14:45:00Z",
   #   "pretty": "2:45 p.m."
   # }
 
@@ -133,27 +127,19 @@ _value:
         (0-86399) for time-only input.
       type: int
       returned: always
-    iso8601:
-      description: >-
-        ISO 8601 formatted datetime or time string. Adapts to input
-        precision.
-      type: str
-      returned: always
-    offset:
-      description: >-
-        Timezone offset in seconds from UTC. Negative for west of UTC,
-        positive for east. Only present if input includes timezone information.
-      type: int
-      returned: when timezone present
     pretty:
       description: >-
         CMOS-formatted datetime string. Format adapts to input precision
         (date only, date+time, time-only, with or without timezone).
       type: str
       returned: always
+    microseconds:
+      description: >-
+        Microsecond component (0-999999) when present in the input.
+      type: int
+      returned: when microseconds present in input
   sample:
     seconds: 1736951400
-    iso8601: "2025-01-15T14:30:00"
     pretty: "Wednesday, January 15, 2025, 2:30 p.m."
 """
 
@@ -172,8 +158,8 @@ class FilterModule(object):
         """Parse date/time string to structured dict.
 
         :param str date_str: Date/time string in any common format
-        :returns Optional[Dict[str, Any]]: Dict with epoch, iso8601,
-            offset (if tz), and pretty fields, or None if parsing
+        :returns Optional[Dict[str, Any]]: Dict with seconds, pretty,
+            and optionally microseconds fields, or None if parsing
             fails
         :raises AnsibleFilterError: If required date parsing
             libraries are not available

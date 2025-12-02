@@ -157,3 +157,14 @@ releases:
         name: var
         namespace: null
     release_date: '2025-11-04'
+  2.0.0:
+    changes:
+      breaking_changes:
+      - datetime filter and parse_datetime() function now return simplified dictionaries
+        with only 'seconds', 'pretty', and optionally 'microseconds' fields. The 'iso8601'
+        and 'offset' fields have been removed to reduce output size. Users needing
+        ISO 8601 formatted strings or timezone offsets can generate these on-demand
+        using appropriate filters.
+    fragments:
+    - 2.0.0-datetime-simplified.yml
+    release_date: '2025-11-08'

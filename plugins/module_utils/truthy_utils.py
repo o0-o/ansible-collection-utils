@@ -88,3 +88,52 @@ def truthy_or_integer(
         raise ValueError(
             f"Unable to interpret {value!r} as an integer or boolean"
         ) from exc
+
+
+def truthy_or_string(
+    value: Any,
+    valid_strings: list[str],
+) -> Union[bool, str]:
+    """Interpret value as valid string when matched, else boolean.
+
+    Check if the input matches one of the valid string values (case-
+    insensitive). If it matches, return the canonical lowercase form.
+    Otherwise, fall back to Ansible's :func:`boolean` helper with strict
+    validation to process the value as a boolean.
+
+    :param Any value: Input to interpret as string or boolean.
+    :param list[str] valid_strings: List of valid string values (will be
+        compared case-insensitively).
+    :returns Union[bool, str]: Matched string (lowercase) or boolean.
+    :raises ValueError: If value cannot be parsed as a valid string or
+        valid boolean (rejects arbitrary strings that don't match).
+
+    Example usage::
+
+        >>> truthy_or_string('auto', ['auto', 'detect'])
+        'auto'
+        >>> truthy_or_string('AUTO', ['auto', 'detect'])
+        'auto'
+        >>> truthy_or_string('yes', ['auto'])
+        True
+        >>> truthy_or_string('no', ['auto'])
+        False
+        >>> truthy_or_string('invalid', ['auto'])
+        Traceback (most recent call last):
+        ...
+        ValueError: Unable to interpret 'invalid' as boolean...
+    """
+    if isinstance(value, str):
+        value_lower = value.lower()
+        for valid_str in valid_strings:
+            if value_lower == valid_str.lower():
+                return value_lower
+
+    try:
+        return boolean(value, strict=True)
+    except (TypeError, ValueError) as exc:
+        valid_list = ", ".join(repr(s) for s in valid_strings)
+        raise ValueError(
+            f"Unable to interpret {value!r} as boolean or one of the "
+            f"valid strings: {valid_list}"
+        ) from exc
