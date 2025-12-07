@@ -32,6 +32,7 @@ from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # 
     dict2items,
     items2dict,
     rekey,
+    unflatten,
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # noqa: E501
     format_elapsed_seconds,
@@ -46,6 +47,9 @@ from ansible_collections.o0_o.utils.plugins.module_utils.string_utils import (  
 from ansible_collections.o0_o.utils.plugins.module_utils.vars_lookup_base import (  # noqa: E501
     VarsLookupBase,
 )
+from ansible_collections.o0_o.utils.plugins.module_utils.utils_action_base import (  # noqa: E501
+    UtilsActionBase,
+)
 
 __all__ = [
     "generate_random_hostname",
@@ -58,6 +62,7 @@ __all__ = [
     "items2dict",
     "dict2items",
     "rekey",
+    "unflatten",
     "format_elapsed_seconds",
     "format_epoch_timestamp",
     "parse_date_to_epoch",
@@ -65,4 +70,5 @@ __all__ = [
     "parse_elapsed_time",
     "strip_comments",
     "VarsLookupBase",
+    "UtilsActionBase",
 ]
