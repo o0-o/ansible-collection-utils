@@ -1,7 +1,0 @@
-# vim: ts=2:sw=2:sts=2:et:ft=yaml.ansible
-# -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
----
-minor_changes:
-  - >-
-    date_utils - Added format_elapsed_seconds() function to convert
-    elapsed time in seconds to human-readable format.

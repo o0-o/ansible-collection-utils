@@ -168,3 +168,14 @@ releases:
     fragments:
     - 2.0.0-datetime-simplified.yml
     release_date: '2025-11-08'
+  2.1.0:
+    changes:
+      minor_changes:
+      - date_utils - Added format_elapsed_seconds() function to convert elapsed time
+        in seconds to human-readable format.
+      - date_utils - Changed format_epoch_timestamp() to use local system timezone
+        by default instead of UTC for human-readable timestamps (https://github.com/o0-o/ansible-collection-utils/pull/XXX).
+    fragments:
+    - format-elapsed-seconds.yml
+    - local-timezone-default.yml
+    release_date: '2025-12-07'

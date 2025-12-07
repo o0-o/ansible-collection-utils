@@ -4,6 +4,15 @@ o0\_o.utils Release Notes
 
 .. contents:: Topics
 
+v2.1.0
+======
+
+Minor Changes
+-------------
+
+- date_utils - Added format_elapsed_seconds() function to convert elapsed time in seconds to human-readable format.
+- date_utils - Changed format_epoch_timestamp() to use local system timezone by default instead of UTC for human-readable timestamps (https://github.com/o0-o/ansible-collection-utils/pull/XXX).
+
 v2.0.0
 ======
 
