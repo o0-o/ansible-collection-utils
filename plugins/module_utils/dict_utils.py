@@ -13,7 +13,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Optional
+import re
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from ansible.module_utils.common.text.converters import to_native
 
@@ -27,6 +28,7 @@ __all__ = [
     "items2dict",
     "dict2items",
     "rekey",
+    "unflatten",
 ]
 
 
@@ -537,5 +539,68 @@ def rekey(
             combine_kwargs,
             reverse_combine_order,
         )
+
+    return result
+
+
+def unflatten(
+    flat: Dict[str, Any],
+    separators: Union[str, List[str]] = ".",
+) -> Dict[str, Any]:
+    """Convert flat dictionary with delimited keys to nested structure.
+
+    Transforms keys like ``user.comment`` or
+    ``com.apple.metadata:kMDItem`` into nested dictionaries.
+
+    :param Dict[str, Any] flat: Flat dictionary with delimited keys.
+    :param Union[str, List[str]] separators: Delimiter(s) to split keys.
+        Defaults to ``.``. Use ``[\".\", \":\"]`` for xattr-style keys
+        where macOS Spotlight uses ``:``
+        (e.g., ``com.apple.metadata:key``).
+    :returns Dict[str, Any]: Nested dictionary structure.
+
+    Example::
+
+        >>> unflatten({"user.comment": "hello", "user.type": "text"})
+        {"user": {"comment": "hello", "type": "text"}}
+
+        >>> unflatten(
+        ...     {"com.apple.metadata:kMDItemWhereFroms": "url"},
+        ...     separators=[".", ":"]
+        ... )
+        {"com": {"apple": {"metadata": {"kMDItemWhereFroms": "url"}}}}
+    """
+    if not isinstance(flat, dict):
+        raise ValueError("unflatten requires a dictionary input")
+
+    sep_list = wantlist(separators, want_list=True)
+    if not sep_list:
+        raise ValueError("unflatten requires at least one separator")
+
+    # Build regex pattern for splitting on any separator
+    pattern = "|".join(re.escape(sep) for sep in sep_list)
+    splitter = re.compile(pattern)
+
+    result: Dict[str, Any] = {}
+    for key, value in flat.items():
+        if not isinstance(key, str):
+            key = str(key)
+
+        parts = splitter.split(key)
+        current = result
+        for part in parts[:-1]:
+            if part not in current:
+                current[part] = {}
+            elif not isinstance(current[part], dict):
+                # Conflict: existing value is not a dict
+                current[part] = {"": current[part]}
+            current = current[part]
+
+        final_key = parts[-1]
+        if final_key in current and isinstance(current[final_key], dict):
+            # Merge value into existing dict under empty key
+            current[final_key][""] = value
+        else:
+            current[final_key] = value
 
     return result

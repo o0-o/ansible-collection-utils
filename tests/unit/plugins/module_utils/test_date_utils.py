@@ -166,7 +166,7 @@ class TestFormatEpochTimestamp:
         """Test formatting timestamp with default UTC timezone."""
         # 2025-01-15 15:10:45 UTC
         timestamp = 1736953845.0
-        result = format_epoch_timestamp(timestamp)
+        result = format_epoch_timestamp(timestamp, tz=timezone.utc)
 
         assert result["seconds"] == 1736953845
         assert "iso8601" not in result  # Field removed
