@@ -13,7 +13,8 @@
 
 from __future__ import annotations
 
-from datetime import timezone, timedelta
+from datetime import timedelta, timezone
+
 
 from ansible_collections.o0_o.utils.plugins.module_utils import (
     format_elapsed_seconds,

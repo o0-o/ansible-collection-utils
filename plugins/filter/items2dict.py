@@ -17,6 +17,9 @@ from typing import Any, Dict, Iterable, Optional
 
 from ansible.errors import AnsibleFilterError
 from ansible.module_utils.common.text.converters import to_native
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
 
 from ansible_collections.o0_o.utils.plugins.module_utils import (
     items2dict as items2dict_helper,
@@ -150,6 +153,7 @@ class FilterModule:
         """Return available filters."""
         return {"items2dict": self.items2dict_filter}
 
+    @typechecked
     def items2dict_filter(
         self,
         items: Iterable[Dict[str, Any]],

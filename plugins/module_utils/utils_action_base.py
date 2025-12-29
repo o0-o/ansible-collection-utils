@@ -23,6 +23,10 @@ import sys
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, Optional
 
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 
 class UtilsActionBase:
     """
@@ -37,6 +41,10 @@ class UtilsActionBase:
     - Command timing display for debugging
     - Inter-plugin delegation using FQCNs
 
+    Note: @typechecked is applied to methods rather than the class to
+    avoid metaclass conflicts when subclasses also inherit from Ansible
+    base classes like ActionBase.
+
     Usage:
         from ansible.plugins.action import ActionBase
         from ansible_collections.o0_o.utils.plugins.module_utils \
@@ -48,6 +56,7 @@ class UtilsActionBase:
     """
 
     @contextmanager
+    @typechecked
     def _binary_safe_execution(self) -> Generator[None, None, None]:
         """Context manager to allow non-UTF-8 data in module responses.
 
@@ -92,6 +101,7 @@ class UtilsActionBase:
         finally:
             constants.MODULE_STRICT_UTF8_RESPONSE = original
 
+    @typechecked
     def _normalize_newlines(self, text: str) -> str:
         """
         Normalize Windows-style line endings to Unix-style.
@@ -105,6 +115,7 @@ class UtilsActionBase:
         """
         return text.replace("\r\n", "\n")
 
+    @typechecked
     def _def_inventory_hostname(
         self, task_vars: Optional[Dict[str, Any]] = None
     ) -> str:
@@ -138,6 +149,7 @@ class UtilsActionBase:
         self.inventory_hostname = "localhost"
         return self.inventory_hostname
 
+    @typechecked
     def _display_longest_command(
         self, commands_result: Dict[str, Any], context: str = ""
     ) -> None:
@@ -172,6 +184,7 @@ class UtilsActionBase:
                 f"completed in under 1 second"
             )
 
+    @typechecked
     def _run_action(
         self,
         plugin_name: str,

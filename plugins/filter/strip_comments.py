@@ -79,7 +79,11 @@ _value:
 
 
 class FilterModule:
-    """Expose comment stripping as an Ansible filter."""
+    """Expose comment stripping as an Ansible filter.
+
+    Note: @typechecked is omitted because the underlying strip_comments
+    helper uses pyparsing types that typeguard cannot resolve.
+    """
 
     def filters(self) -> Dict[str, Any]:
         return {"strip_comments": self.strip_comments_filter}

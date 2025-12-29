@@ -17,6 +17,9 @@ import re
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from ansible.module_utils.common.text.converters import to_native
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
 
 from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
 
@@ -32,6 +35,7 @@ __all__ = [
 ]
 
 
+@typechecked
 def items2dict(
     items: Iterable[Dict[str, Any]],
     key_name: Any = "key",
@@ -175,6 +179,7 @@ def items2dict(
     return result
 
 
+@typechecked
 def dict2items(
     mapping: Dict[Any, Any],
     key_name: Any = "key",
@@ -239,10 +244,12 @@ def dict2items(
     return items
 
 
+@typechecked
 def _is_empty_mapping(value: Any) -> bool:
     return isinstance(value, dict) and not value
 
 
+@typechecked
 def _build_single_item(
     *,
     key: Any,
@@ -299,6 +306,7 @@ def _build_single_item(
     return {key_field: key, value_name: processed_value}
 
 
+@typechecked
 def _expand_list_value(
     key: Any,
     value: Any,
@@ -335,6 +343,7 @@ def _expand_list_value(
     return expanded
 
 
+@typechecked
 def _select_output_key_field(
     key_candidates: List[str],
     value_dict: Optional[Dict[str, Any]],
@@ -361,6 +370,7 @@ def _select_output_key_field(
     )
 
 
+@typechecked
 def _combine_dicts(
     existing_value: Dict[str, Any],
     value_payload: Dict[str, Any],
@@ -381,6 +391,7 @@ def _combine_dicts(
     return combine(existing_value, value_payload, **combine_kwargs)
 
 
+@typechecked
 def _is_effectively_empty(payload: Dict[str, Any]) -> bool:
     if not payload:
         return True
@@ -391,6 +402,7 @@ def _is_effectively_empty(payload: Dict[str, Any]) -> bool:
     return True
 
 
+@typechecked
 def _is_effectively_empty_value(value: Any) -> bool:
     if value is None:
         return True
@@ -399,6 +411,7 @@ def _is_effectively_empty_value(value: Any) -> bool:
     return False
 
 
+@typechecked
 def rekey(
     mapping: Dict[Any, Any],
     key_name: Any,
@@ -543,6 +556,7 @@ def rekey(
     return result
 
 
+@typechecked
 def unflatten(
     flat: Dict[str, Any],
     separators: Union[str, List[str]] = ".",

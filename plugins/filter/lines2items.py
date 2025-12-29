@@ -17,6 +17,9 @@ from typing import Any, Dict, List
 
 from ansible.errors import AnsibleFilterError
 from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
 
 DOCUMENTATION = r"""
 ---
@@ -78,6 +81,7 @@ class FilterModule:
             "splitlines": self.lines2items_filter,
         }
 
+    @typechecked
     def lines2items_filter(
         self, value: Any, keepends: bool = False
     ) -> List[str]:

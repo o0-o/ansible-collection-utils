@@ -17,6 +17,10 @@ from typing import Any, Dict, List
 
 from ansible.errors import AnsibleFilterError
 from ansible.module_utils.common.text.converters import to_native
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 from ansible_collections.o0_o.utils.plugins.module_utils import string2items
 
 
@@ -83,6 +87,7 @@ class FilterModule:
         """
         return {"string2items": self.string2items_filter}
 
+    @typechecked
     def string2items_filter(
         self, value: Any, delimiter: str = ",", trim: bool = True
     ) -> List[str]:

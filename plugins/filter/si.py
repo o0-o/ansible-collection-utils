@@ -14,6 +14,11 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Union
+
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 from ansible_collections.o0_o.utils.plugins.module_utils import parse_si
 
 
@@ -128,6 +133,7 @@ class FilterModule(object):
         """
         return {"si": self.si_filter}
 
+    @typechecked
     def si_filter(
         self, value_str: str, binary: bool = False, optimize: bool = True
     ) -> Dict[str, Union[float, str]]:

@@ -15,12 +15,17 @@ from __future__ import annotations
 
 from typing import Any, Optional, Union
 
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 try:
     from ansible.module_utils.common.boolean import boolean
 except ImportError:  # pragma: no cover - fallback for older Ansible
     from ansible.module_utils.parsing.convert_bool import boolean
 
 
+@typechecked
 def _coerce_integer(value: Any) -> Optional[int]:
     """Attempt to convert a value into a base-10 integer.
 
@@ -43,6 +48,7 @@ def _coerce_integer(value: Any) -> Optional[int]:
     return None
 
 
+@typechecked
 def truthy_or_integer(
     value: Any,
     *,
@@ -90,6 +96,7 @@ def truthy_or_integer(
         ) from exc
 
 
+@typechecked
 def truthy_or_string(
     value: Any,
     valid_strings: list[str],

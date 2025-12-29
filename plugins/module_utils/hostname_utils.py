@@ -11,11 +11,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Union
-
 import secrets
 import string
 import traceback
+from typing import Any, Dict, List
+
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
 
 try:
     import dns.name  # type: ignore[import-untyped]
@@ -51,6 +54,7 @@ except Exception:  # pragma: no cover - surfaced to caller
 __all__ = ["parse_hostname", "generate_random_hostname"]
 
 
+@typechecked
 def generate_random_hostname(length: int = 16) -> str:
     """Generate cryptographically secure RFC-compliant hostname.
 
@@ -75,14 +79,16 @@ def generate_random_hostname(length: int = 16) -> str:
     return "".join(secrets.choice(alphabet) for i in range(length))
 
 
-def _coerce_hostname_str(data: Union[str, Dict[str, Any]]) -> str:
+@typechecked
+def _coerce_hostname_str(data: Any) -> str:
     """Extract a hostname string from supported inputs.
 
     Accepts either a string or a dict containing one of the following
     keys (first found wins): ``long``, ``fqdn``, ``short``,
     ``hostname``.
 
-    :param data: String hostname or dict with hostname fields
+    :param Any data: String hostname or dict with hostname fields.
+        Unsupported types raise TypeError.
     :returns: Hostname string (lowercase, trimmed); ``''`` if not found
     :raises TypeError: When input type is unsupported
     """
@@ -97,7 +103,8 @@ def _coerce_hostname_str(data: Union[str, Dict[str, Any]]) -> str:
     raise TypeError("hostname input must be str or dict")
 
 
-def parse_hostname(data: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
+@typechecked
+def parse_hostname(data: Any) -> Dict[str, Any]:
     """Parse a hostname string into structured components.
 
     Returns a dict with keys such as ``short``, ``long``, ``domain``,
@@ -110,10 +117,11 @@ def parse_hostname(data: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
     - idna
     - tldextract
 
-    :param data: String hostname or dict with common hostname keys
+    :param Any data: String hostname or dict with common hostname keys.
+        Unsupported types raise TypeError.
     :returns: Parsed components; ``{}`` when input is empty
     :raises ImportError: If required libraries are missing
-    :raises ValueError: If hostname is invalid
+    :raises TypeError: If input type is unsupported
     """
     if not HAS_DNS:
         raise ImportError(f"dnspython is required: {DNS_IMPORT_ERROR or ''}")

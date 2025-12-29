@@ -1,5 +1,8 @@
 # Test requirements for o0_o.utils collection
 
+# Required for runtime type checking
+typeguard>=4.0.0
+
 # Required for hostname filter plugin
 dnspython
 idna

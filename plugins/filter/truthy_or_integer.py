@@ -17,6 +17,10 @@ from typing import Any, Dict, Union
 
 from ansible.errors import AnsibleFilterError
 from ansible.module_utils.common.text.converters import to_native
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 from ansible_collections.o0_o.utils.plugins.module_utils import (
     truthy_or_integer,
 )
@@ -86,6 +90,7 @@ class FilterModule:
         """Expose filter names for Ansible."""
         return {"truthy_or_integer": self.truthy_or_integer_filter}
 
+    @typechecked
     def truthy_or_integer_filter(
         self,
         value: Any,

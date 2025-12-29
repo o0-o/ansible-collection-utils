@@ -15,6 +15,10 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 
 class VarsLookupBase:
     """Base class for lookup plugins that need to access variables.
@@ -26,8 +30,13 @@ class VarsLookupBase:
 
     Variables are accessed from the templar's available variables,
     which includes facts and all other variables from the play context.
+
+    Note: @typechecked is applied to methods rather than the class to
+    avoid metaclass conflicts when subclasses also inherit from Ansible
+    base classes.
     """
 
+    @typechecked
     def lookup_var(
         self, var_name: str, host: Optional[str] = None, **kwargs: Any
     ) -> Any:

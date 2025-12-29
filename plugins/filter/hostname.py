@@ -15,6 +15,10 @@ from typing import Any, Dict, Union
 
 from ansible.errors import AnsibleFilterError
 from ansible.module_utils.common.text.converters import to_native
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 from ansible_collections.o0_o.utils.plugins.module_utils import parse_hostname
 
 
@@ -120,6 +124,7 @@ class FilterModule:
         """
         return {"hostname": self.hostname_filter}
 
+    @typechecked
     def hostname_filter(
         self, data: Union[str, Dict[str, Any]]
     ) -> Dict[str, Any]:

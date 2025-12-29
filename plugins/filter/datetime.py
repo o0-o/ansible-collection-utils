@@ -14,7 +14,12 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
+
 from ansible.errors import AnsibleFilterError
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 from ansible_collections.o0_o.utils.plugins.module_utils import parse_datetime
 
 
@@ -154,6 +159,7 @@ class FilterModule(object):
         """
         return {"datetime": self.datetime_filter}
 
+    @typechecked
     def datetime_filter(self, date_str: str) -> Optional[Dict[str, Any]]:
         """Parse date/time string to structured dict.
 

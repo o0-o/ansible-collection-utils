@@ -40,7 +40,7 @@ class TestBinarySafeExecution:
     """Tests for _binary_safe_execution context manager."""
 
     def test_raises_without_constants_imported(self) -> None:
-        """Test that RuntimeError is raised when ansible.constants not imported."""
+        """Test RuntimeError when ansible.constants not imported."""
         base = UtilsActionBase()
 
         # Ensure ansible.constants is not in sys.modules

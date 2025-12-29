@@ -12,7 +12,11 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, Union
+from typing import Any, Dict, Union
+
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
 
 __all__ = ["parse_si", "SI_MULTIPLIERS", "IEC_MULTIPLIERS", "BASE_UNITS"]
 
@@ -70,8 +74,9 @@ IEC_MULTIPLIERS = {
 }
 
 
+@typechecked
 def parse_si(
-    value_str: str, binary: bool = False, optimize: bool = True
+    value_str: Any, binary: bool = False, optimize: bool = True
 ) -> Dict[str, Union[int, str]]:
     """Parse a value with SI or IEC units to base units.
 
@@ -80,7 +85,8 @@ def parse_si(
     ``GB`` -> ``GiB``). When ``optimize`` is True, the returned
     ``pretty`` value selects an appropriate prefix for readability.
 
-    :param value_str: Input like ``"2400MHz"`` or ``"32GiB"``
+    :param Any value_str: Input like ``"2400MHz"`` or ``"32GiB"``.
+        Non-string values return an empty dict.
     :param binary: Interpret SI prefixes as IEC binary
     :param optimize: Optimize the prefix for pretty display
     :returns: Dict with canonical base unit key and integer value

@@ -16,6 +16,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 try:
     from dateutil import parser as dateutil_parser, tz
     from dateutil.parser import _parser as dateutil_internal_parser
@@ -25,6 +29,7 @@ except ImportError:
     HAS_DATEUTIL = False
 
 
+@typechecked
 def parse_datetime(date_str: str) -> Optional[Dict[str, Any]]:
     """Parse a date or time string and report precision details."""
     if not date_str:
@@ -66,6 +71,7 @@ def parse_datetime(date_str: str) -> Optional[Dict[str, Any]]:
     return result
 
 
+@typechecked
 def _parse_with_dateutil(date_str: str) -> Optional[Tuple[datetime, Any]]:
     """Parse string with python-dateutil and expose raw precision."""
     if not HAS_DATEUTIL:
@@ -95,6 +101,7 @@ def _parse_with_dateutil(date_str: str) -> Optional[Tuple[datetime, Any]]:
     return dt, raw
 
 
+@typechecked
 def _format_offset_value(offset_seconds: int) -> str:
     """Convert an offset in seconds to ±HH:MM format."""
     sign = "+" if offset_seconds >= 0 else "-"
@@ -104,6 +111,7 @@ def _format_offset_value(offset_seconds: int) -> str:
     return f"{sign}{hours:02d}:{minutes:02d}"
 
 
+@typechecked
 def _format_tz_name(dt: datetime, raw: Any) -> str:
     """Format timezone name for pretty output."""
     if raw.tzname:
@@ -123,6 +131,7 @@ def _format_tz_name(dt: datetime, raw: Any) -> str:
     return f"UTC{_format_offset_value(int(raw.tzoffset))}"
 
 
+@typechecked
 def _format_cmos(dt: datetime, raw: Any) -> str:
     """Format datetime in a Chicago Manual of Style inspired form."""
     parts: list[str] = []
@@ -206,6 +215,7 @@ def _format_cmos(dt: datetime, raw: Any) -> str:
     return ", ".join(parts)
 
 
+@typechecked
 def parse_date_to_epoch(date_str: str) -> Optional[int]:
     """Parse date string to Unix epoch timestamp.
 
@@ -221,6 +231,7 @@ def parse_date_to_epoch(date_str: str) -> Optional[int]:
     return result["seconds"] if result else None
 
 
+@typechecked
 def format_epoch_timestamp(
     timestamp: float,
     include_microseconds: bool = False,
@@ -283,6 +294,7 @@ def format_epoch_timestamp(
     return result
 
 
+@typechecked
 def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
     """Parse elapsed time string from ps etime format.
 
@@ -388,6 +400,7 @@ def parse_elapsed_time(elapsed_str: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+@typechecked
 def format_elapsed_seconds(total_seconds: int) -> Dict[str, Any]:
     """Format elapsed seconds to human-readable format.
 

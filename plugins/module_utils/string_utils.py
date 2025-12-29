@@ -67,7 +67,11 @@ _DEFAULT_QUOTES: Iterable[Any] = (
 def _ensure_parser_elements(
     style: CommentStyle,
 ) -> List[Any]:
-    """Normalize comment style input to parser elements."""
+    """Normalize comment style input to parser elements.
+
+    Note: @typechecked is omitted here because typeguard cannot resolve
+    the CommentStyle type alias containing pyparsing's ParserElement.
+    """
     if not HAS_PYPARSING:
         raise ImportError(PYPARSING_IMPORT_ERROR)
 

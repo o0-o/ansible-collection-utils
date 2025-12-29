@@ -13,9 +13,14 @@ from __future__ import annotations
 
 from typing import Any, List
 
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    typechecked,
+)
+
 __all__ = ["string2items", "wantlist"]
 
 
+@typechecked
 def string2items(
     value: Any, delimiter: str = ",", trim: bool = True
 ) -> List[str]:
@@ -43,6 +48,7 @@ def string2items(
     return items
 
 
+@typechecked
 def wantlist(value: Any, want_list: bool = True) -> Any:
     """Ensure value is a list or reduce to simplest form.
 
@@ -77,6 +83,7 @@ def wantlist(value: Any, want_list: bool = True) -> Any:
     return [value]
 
 
+@typechecked
 def _notwantlist(value: Any) -> Any:
     """Prefer single values over lists when possible (private helper).
 
