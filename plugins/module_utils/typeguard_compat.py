@@ -45,4 +45,5 @@ except ImportError:
 
         return wrapper  # type: ignore[return-value]
 
+
 __all__ = ["typechecked", "HAS_TYPEGUARD", "TYPEGUARD_IMPORT_ERROR"]
