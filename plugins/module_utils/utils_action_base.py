@@ -19,7 +19,9 @@ detection, command timing display, and inter-plugin delegation.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+import sys
+from contextlib import contextmanager
+from typing import Any, Dict, Generator, Optional
 
 
 class UtilsActionBase:
@@ -44,6 +46,51 @@ class UtilsActionBase:
             def run(self, tmp=None, task_vars=None):
                 ...
     """
+
+    @contextmanager
+    def _binary_safe_execution(self) -> Generator[None, None, None]:
+        """Context manager to allow non-UTF-8 data in module responses.
+
+        Temporarily disables Ansible's strict UTF-8 response validation,
+        allowing binary data to pass through module execution without
+        raising deserialization errors.
+
+        This is necessary when reading binary file content via the
+        command module, as Ansible's default behavior rejects responses
+        containing surrogate characters (used for non-UTF-8 bytes).
+
+        The raw module does not require this workaround as it bypasses
+        the module response deserialization layer.
+
+        Usage::
+
+            with self._binary_safe_execution():
+                result = self._execute_module(
+                    module_name='command',
+                    module_args={'_raw_params': f'cat {path}'},
+                    task_vars=task_vars,
+                )
+
+        :yields: None
+        :raises RuntimeError: If ansible.constants has not been imported
+        """
+        # Verify ansible.constants is available (must be imported by the
+        # action plugin since module_utils cannot import it directly)
+        if "ansible.constants" not in sys.modules:
+            raise RuntimeError(
+                "_binary_safe_execution() requires ansible.constants to be "
+                "imported. Add 'from ansible import constants' to your "
+                "action plugin."
+            )
+
+        constants = sys.modules["ansible.constants"]
+
+        original = constants.MODULE_STRICT_UTF8_RESPONSE
+        constants.MODULE_STRICT_UTF8_RESPONSE = False
+        try:
+            yield
+        finally:
+            constants.MODULE_STRICT_UTF8_RESPONSE = original
 
     def _normalize_newlines(self, text: str) -> str:
         """
