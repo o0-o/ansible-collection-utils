@@ -4,6 +4,30 @@ o0\_o.utils Release Notes
 
 .. contents:: Topics
 
+v3.0.0
+======
+
+Minor Changes
+-------------
+
+- module_utils.date_utils - Added ``time()`` unified function that dispatches to the appropriate parser/formatter based on input type. Accepts ``epoch``, ``iso8601``, ``etime`` (ps-style elapsed), or ``seconds`` keyword arguments and returns structured time dicts.
+- module_utils.error_utils - Added new module with ``format_error_message()`` function for formatting collections of errors into human-readable messages suitable for Ansible result dictionaries.
+- module_utils.string_utils - Added ``validate_encoding()`` function to validate encoding names against Python's codec system and return the normalized lowercase form.
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- module_utils.utils_action_base - Removed ``UtilsActionBase`` class. This class has been moved to ``o0_o.core`` collection as part of the namespace reorganization. Update imports from ``o0_o.utils.plugins.module_utils.UtilsActionBase`` to ``o0_o.core.plugins.module_utils.CoreActionBase``.
+
+v2.2.0
+======
+
+Minor Changes
+-------------
+
+- module_utils.typeguard_compat - Added compatibility module for runtime type checking with typeguard, providing graceful fallback when typeguard is not installed.
+- module_utils.utils_action_base - Added ``_binary_safe_execution()`` context manager to temporarily disable Ansible's strict UTF-8 response validation, allowing binary data to pass through module execution without deserialization errors.
+
 v2.1.0
 ======
 
