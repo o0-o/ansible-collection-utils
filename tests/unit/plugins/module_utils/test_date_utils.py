@@ -15,12 +15,14 @@ from __future__ import annotations
 
 from datetime import timedelta, timezone
 
+import pytest
 
 from ansible_collections.o0_o.utils.plugins.module_utils import (
     format_elapsed_seconds,
     format_epoch_timestamp,
     parse_datetime,
     parse_date_to_epoch,
+    time,
 )
 
 
@@ -327,3 +329,49 @@ class TestFormatElapsedSeconds:
             formatted = format_elapsed_seconds(parsed["seconds"])
             assert formatted["seconds"] == parsed["seconds"]
             assert formatted["pretty"] == parsed["pretty"]
+
+
+class TestTime:
+    """Tests for time() unified function."""
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_seconds",
+        [
+            ({"epoch": 1735689600.0}, 1735689600),
+            ({"etime": "2-03:45:12"}, 186312),
+            ({"seconds": 3600}, 3600),
+        ],
+    )
+    def test_valid_inputs(self, kwargs, expected_seconds) -> None:
+        """Test time() with various valid input types."""
+        result = time(**kwargs)
+        assert result["seconds"] == expected_seconds
+        assert "pretty" in result
+
+    def test_iso8601_input(self) -> None:
+        """Test time() with ISO 8601 datetime string."""
+        result = time(iso8601="2024-12-25T10:30:00")
+        assert "seconds" in result
+        assert "pretty" in result
+
+    def test_no_input_raises(self) -> None:
+        """Test time() raises when no input provided."""
+        with pytest.raises(ValueError, match="Must provide one of"):
+            time()
+
+    def test_multiple_inputs_raises(self) -> None:
+        """Test time() raises when multiple inputs provided."""
+        with pytest.raises(ValueError, match="Only one of"):
+            time(epoch=1735689600.0, seconds=3600)
+
+    @pytest.mark.parametrize(
+        "kwargs,match",
+        [
+            ({"iso8601": "not-a-date"}, "Invalid ISO 8601"),
+            ({"etime": "invalid"}, "Invalid elapsed time"),
+        ],
+    )
+    def test_invalid_inputs_raise(self, kwargs, match) -> None:
+        """Test time() raises for invalid inputs."""
+        with pytest.raises(ValueError, match=match):
+            time(**kwargs)

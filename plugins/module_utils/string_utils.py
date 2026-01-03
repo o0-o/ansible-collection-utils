@@ -13,6 +13,8 @@
 
 from __future__ import annotations
 
+import codecs
+
 from typing import Any, Iterable, List, Sequence, Union
 
 try:
@@ -154,4 +156,20 @@ def strip_comments(
     return "\n".join(processed)
 
 
-__all__ = ["strip_comments"]
+def validate_encoding(encoding: str) -> str:
+    """Validate encoding name and return normalized lowercase form.
+
+    :param str encoding: Encoding name to validate (e.g., 'UTF-8')
+    :returns str: Normalized lowercase encoding name
+    :raises ValueError: If encoding is not recognized by Python's
+        codec system
+    """
+    encoding = encoding.lower()
+    try:
+        codecs.lookup(encoding)
+    except LookupError as e:
+        raise ValueError(f"Invalid encoding: {e}") from e
+    return encoding
+
+
+__all__ = ["strip_comments", "validate_encoding"]

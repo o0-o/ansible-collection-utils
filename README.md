@@ -22,6 +22,11 @@ Refer there for the complete list of plugins and options.
 ansible-galaxy collection install o0_o.utils
 ```
 
+> **Note:** This collection is part of the `o0_o` namespace. While it can be
+> installed and used standalone, consider installing the full namespace via
+> `ansible-galaxy collection install o0_o.core` for access to all related
+> collections.
+
 ## Contributing
 
 - Keep code formatted with black and passing flake8/yamllint.

@@ -40,15 +40,17 @@ from ansible_collections.o0_o.utils.plugins.module_utils.date_utils import (  # 
     parse_date_to_epoch,
     parse_datetime,
     parse_elapsed_time,
+    time,
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.string_utils import (  # noqa: E501
     strip_comments,
+    validate_encoding,
+)
+from ansible_collections.o0_o.utils.plugins.module_utils.error_utils import (  # noqa: E501
+    format_error_message,
 )
 from ansible_collections.o0_o.utils.plugins.module_utils.vars_lookup_base import (  # noqa: E501
     VarsLookupBase,
-)
-from ansible_collections.o0_o.utils.plugins.module_utils.utils_action_base import (  # noqa: E501
-    UtilsActionBase,
 )
 
 __all__ = [
@@ -68,7 +70,9 @@ __all__ = [
     "parse_date_to_epoch",
     "parse_datetime",
     "parse_elapsed_time",
+    "time",
     "strip_comments",
+    "validate_encoding",
+    "format_error_message",
     "VarsLookupBase",
-    "UtilsActionBase",
 ]

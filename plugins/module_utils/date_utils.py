@@ -438,3 +438,70 @@ def format_elapsed_seconds(total_seconds: int) -> Dict[str, Any]:
         "seconds": total_seconds,
         "pretty": pretty,
     }
+
+
+@typechecked
+def time(
+    *,
+    epoch: Optional[float] = None,
+    iso8601: Optional[str] = None,
+    etime: Optional[str] = None,
+    seconds: Optional[int] = None,
+    include_microseconds: bool = False,
+    tz: Optional[timezone] = None,
+) -> Dict[str, Any]:
+    """Unified time parsing and formatting.
+
+    Dispatches to the appropriate parser/formatter based on the
+    keyword argument provided. Exactly one of epoch, iso8601, etime,
+    or seconds must be specified.
+
+    Examples:
+        >>> time(epoch=1735123456)
+        {'seconds': 1735123456, 'pretty': 'Wednesday, December...'}
+        >>> time(iso8601="2024-12-25T10:30:00Z")
+        {'seconds': 1735123800, 'pretty': 'Wednesday, December...'}
+        >>> time(etime="2-03:45:12")
+        {'seconds': 186312, 'pretty': '2 days, 3 hours, ...'}
+        >>> time(seconds=3600)
+        {'seconds': 3600, 'pretty': '1 hour'}
+
+    :param Optional[float] epoch: Unix timestamp to format
+    :param Optional[str] iso8601: ISO 8601 datetime string
+    :param Optional[str] etime: ps-style elapsed time
+        (``[[DD-]HH:]MM:SS``)
+    :param Optional[int] seconds: Raw seconds to format as duration
+    :param bool include_microseconds: Include microseconds in epoch
+        output
+    :param Optional[timezone] tz: Timezone for epoch conversion
+    :returns Dict[str, Any]: Structured time dict with 'seconds' and
+        'pretty' keys, plus format-specific keys
+    :raises ValueError: If no input or multiple inputs provided
+    """
+    inputs = [epoch, iso8601, etime, seconds]
+    provided = sum(1 for x in inputs if x is not None)
+
+    if provided == 0:
+        raise ValueError("Must provide one of: epoch, iso8601, etime, seconds")
+    if provided > 1:
+        raise ValueError(
+            "Only one of epoch, iso8601, etime, seconds may be provided"
+        )
+
+    if epoch is not None:
+        return format_epoch_timestamp(epoch, include_microseconds, tz)
+
+    if iso8601 is not None:
+        result = parse_datetime(iso8601)
+        if result is None:
+            raise ValueError(f"Invalid ISO 8601 datetime: {iso8601}")
+        return result
+
+    if etime is not None:
+        result = parse_elapsed_time(etime)
+        if result is None:
+            raise ValueError(f"Invalid elapsed time format: {etime}")
+        return result
+
+    if seconds is not None:
+        return format_elapsed_seconds(seconds)

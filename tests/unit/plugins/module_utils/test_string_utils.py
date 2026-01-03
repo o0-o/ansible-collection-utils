@@ -30,6 +30,7 @@ assert spec.loader is not None
 spec.loader.exec_module(module)
 
 strip_comments = module.strip_comments
+validate_encoding = module.validate_encoding
 
 
 def test_strip_comments_default_python() -> None:
@@ -72,3 +73,34 @@ def test_strip_comments_unknown_style() -> None:
 
     with pytest.raises(ValueError):
         strip_comments("value", comment_style="unknown")
+
+
+def test_validate_encoding_utf8() -> None:
+    """Test validate_encoding with UTF-8."""
+    assert validate_encoding("UTF-8") == "utf-8"
+    assert validate_encoding("utf-8") == "utf-8"
+    assert validate_encoding("utf8") == "utf8"
+
+
+def test_validate_encoding_ascii() -> None:
+    """Test validate_encoding with ASCII."""
+    assert validate_encoding("ASCII") == "ascii"
+    assert validate_encoding("ascii") == "ascii"
+
+
+def test_validate_encoding_latin1() -> None:
+    """Test validate_encoding with Latin-1."""
+    assert validate_encoding("latin-1") == "latin-1"
+    assert validate_encoding("ISO-8859-1") == "iso-8859-1"
+
+
+def test_validate_encoding_invalid() -> None:
+    """Test validate_encoding raises for invalid encoding."""
+    with pytest.raises(ValueError, match="Invalid encoding"):
+        validate_encoding("not-an-encoding")
+
+
+def test_validate_encoding_empty() -> None:
+    """Test validate_encoding raises for empty string."""
+    with pytest.raises(ValueError, match="Invalid encoding"):
+        validate_encoding("")
