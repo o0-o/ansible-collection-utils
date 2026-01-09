@@ -214,3 +214,22 @@ releases:
     - 3.0.0-time-function.yml
     - 3.0.0-validate-encoding.yml
     release_date: '2026-01-02'
+  3.1.0:
+    changes:
+      bugfixes:
+      - string_utils - Update pyparsing API calls to use snake_case (``esc_char``,
+        ``transform_string``) to resolve deprecation warnings.
+      - typeguard doc fragment - Fix documentation to reflect that typeguard is required,
+        not optional.
+      minor_changes:
+      - dict_utils - Add ``merge_hash`` function adapted from Ansible core (``ansible.utils.vars``)
+        for use in module_utils context. Supports recursive merging and list_merge
+        strategies (replace, keep, append, prepend, append_rp, prepend_rp).
+      - module_utils - Export ``typechecked``, ``HAS_TYPEGUARD``, and ``TYPEGUARD_IMPORT_ERROR``
+        from package root for convenient importing.
+      - si filter - Now raises ``AnsibleFilterError`` on parse failures instead of
+        silently returning an empty dict, consistent with other filters.
+    fragments:
+    - 3.1.0.yaml
+    - typechecked-export.yaml
+    release_date: '2026-01-09'
