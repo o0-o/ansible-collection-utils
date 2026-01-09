@@ -31,6 +31,7 @@ from ansible_collections.o0_o.utils.plugins.module_utils.truthy_utils import (  
 from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # noqa: E501
     dict2items,
     items2dict,
+    merge_hash,
     rekey,
     unflatten,
 )
@@ -63,6 +64,7 @@ __all__ = [
     "truthy_or_string",
     "items2dict",
     "dict2items",
+    "merge_hash",
     "rekey",
     "unflatten",
     "format_elapsed_seconds",

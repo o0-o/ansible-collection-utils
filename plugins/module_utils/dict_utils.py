@@ -9,11 +9,22 @@
 #
 # This file is part of the o0_o.utils Ansible Collection.
 
-"""Shared helpers for items2dict and dict2items filters."""
+"""Shared helpers for dictionary manipulation filters.
+
+The merge_hash function is adapted from Ansible core
+(ansible.utils.vars) which cannot be imported in module_utils
+context. Original implementation:
+https://github.com/ansible/ansible/blob/devel/lib/ansible/utils/vars.py
+
+Original merge_hash copyright:
+    (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+    GNU General Public License v3.0+
+"""
 
 from __future__ import annotations
 
 import re
+from collections.abc import MutableMapping, MutableSequence
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from ansible.module_utils.common.text.converters import to_native
@@ -25,14 +36,101 @@ from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
 
 
 ITEMS_VALID_COLLISIONS = {"fail", "list", "combine"}
+_VALID_LIST_MERGE = frozenset(
+    ("replace", "keep", "append", "prepend", "append_rp", "prepend_rp")
+)
 
 
 __all__ = [
     "items2dict",
     "dict2items",
+    "merge_hash",
     "rekey",
     "unflatten",
 ]
+
+
+@typechecked
+def merge_hash(
+    x: dict[str, Any],
+    y: dict[str, Any],
+    recursive: bool = True,
+    list_merge: str = "replace",
+) -> dict[str, Any]:
+    """Merge dictionary y into x, with y taking precedence.
+
+    Adapted from ansible.utils.vars.merge_hash which cannot be imported
+    in module_utils context.
+
+    :param dict[str, Any] x: Base dictionary (lower priority)
+    :param dict[str, Any] y: Dictionary to merge in (higher priority)
+    :param bool recursive: Recursively merge nested dicts (default True)
+    :param str list_merge: How to handle list collisions. Options:
+        'replace' (default), 'keep', 'append', 'prepend',
+        'append_rp', 'prepend_rp'
+    :returns dict[str, Any]: New merged dictionary (inputs unmodified)
+    :raises ValueError: If list_merge is not a valid option
+    """
+    if list_merge not in _VALID_LIST_MERGE:
+        raise ValueError(
+            f"merge_hash: 'list_merge' argument can only be equal to "
+            f"'replace', 'keep', 'append', 'prepend', 'append_rp' or "
+            f"'prepend_rp', got '{list_merge}'"
+        )
+
+    # Fast paths
+    if x == {} or x == y:
+        return y.copy()
+    if y == {}:
+        return x.copy()
+
+    # Copy x to avoid modification
+    x = x.copy()
+
+    # Fast path for non-recursive replace
+    if not recursive and list_merge == "replace":
+        x.update(y)
+        return x
+
+    # Merge each element from y into x
+    for key, y_value in y.items():
+        if key not in x:
+            x[key] = y_value
+            continue
+
+        x_value = x[key]
+
+        # Both are dicts: recurse or replace
+        if isinstance(x_value, MutableMapping) and isinstance(
+            y_value, MutableMapping
+        ):
+            if recursive:
+                x[key] = merge_hash(x_value, y_value, recursive, list_merge)
+            else:
+                x[key] = y_value
+            continue
+
+        # Both are lists: merge according to list_merge strategy
+        if isinstance(x_value, MutableSequence) and isinstance(
+            y_value, MutableSequence
+        ):
+            if list_merge == "replace":
+                x[key] = y_value
+            elif list_merge == "append":
+                x[key] = x_value + y_value
+            elif list_merge == "prepend":
+                x[key] = y_value + x_value
+            elif list_merge == "append_rp":
+                x[key] = [z for z in x_value if z not in y_value] + y_value
+            elif list_merge == "prepend_rp":
+                x[key] = y_value + [z for z in x_value if z not in y_value]
+            # else 'keep': keep x value
+            continue
+
+        # Default: y overrides x
+        x[key] = y_value
+
+    return x
 
 
 @typechecked

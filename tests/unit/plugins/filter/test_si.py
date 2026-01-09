@@ -64,5 +64,7 @@ def test_si_raises_on_helper_errors(
         "ansible_collections.o0_o.utils.plugins.filter.si.parse_si",
         boom,
     )
-    with pytest.raises(AnsibleFilterError, match="si failed.*ValueError.*broken"):
+    with pytest.raises(
+        AnsibleFilterError, match="si failed.*ValueError.*broken"
+    ):
         filter_module.si_filter("value")
