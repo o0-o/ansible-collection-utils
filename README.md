@@ -1,6 +1,6 @@
 # o0_o.utils
 
-[![GitHub CI](https://github.com/o0-o/ansible-collection-utils/workflows/CI/badge.svg)](https://github.com/o0-o/ansible-collection-utils/actions)
+[![CI](https://github.com/o0-o/ansible-collection-utils/actions/workflows/ci.yml/badge.svg)](https://github.com/o0-o/ansible-collection-utils/actions/workflows/ci.yml)
 [![Ansible Galaxy](https://img.shields.io/ansible/collection/v/o0_o/utils.svg?color=brightgreen&label=Ansible%20Galaxy)](https://galaxy.ansible.com/o0_o/utils)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://o0-o.github.io/ansible-collection-utils/)
 
@@ -8,8 +8,8 @@ Reusable filters and helpers for Ansible automation.
 
 ## Documentation
 
-Full documentation (filters, usage, and examples) is published via GitHub Pages
-(not versioned):
+Full documentation (filters, lookup plugins, and examples) is published via
+GitHub Pages (not versioned):
 
 - https://o0-o.github.io/ansible-collection-utils/
 
@@ -21,11 +21,6 @@ Refer there for the complete list of plugins and options.
 ```bash
 ansible-galaxy collection install o0_o.utils
 ```
-
-> **Note:** This collection is part of the `o0_o` namespace. While it can be
-> installed and used standalone, consider installing the full namespace via
-> `ansible-galaxy collection install o0_o.core` for access to all related
-> collections.
 
 ## Contributing
 
