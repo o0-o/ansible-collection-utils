@@ -17,6 +17,7 @@ from typing import Any, Dict
 
 import pytest
 
+from ansible.errors import AnsibleFilterError
 from ansible_collections.o0_o.utils.plugins.filter.si import FilterModule
 from ansible_collections.o0_o.utils.plugins.module_utils import parse_si
 
@@ -51,10 +52,10 @@ def test_si_filter_registration(filter_module: FilterModule) -> None:
     assert filters["si"].__func__ is FilterModule.si_filter
 
 
-def test_si_swallows_helper_errors(
+def test_si_raises_on_helper_errors(
     monkeypatch: pytest.MonkeyPatch, filter_module: FilterModule
 ) -> None:
-    """Helper failures should return an empty mapping."""
+    """Helper failures should raise AnsibleFilterError."""
 
     def boom(*args: Any, **kwargs: Any) -> None:
         raise ValueError("broken")
@@ -63,4 +64,5 @@ def test_si_swallows_helper_errors(
         "ansible_collections.o0_o.utils.plugins.filter.si.parse_si",
         boom,
     )
-    assert filter_module.si_filter("value") == {}
+    with pytest.raises(AnsibleFilterError, match="si failed.*ValueError.*broken"):
+        filter_module.si_filter("value")

@@ -149,7 +149,7 @@ _value:
 """
 
 
-class FilterModule(object):
+class FilterModule:
     """Ansible filter plugin for datetime parsing."""
 
     def filters(self) -> Dict[str, Any]:

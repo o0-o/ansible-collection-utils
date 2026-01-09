@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Union
 
+from ansible.errors import AnsibleFilterError
+from ansible.module_utils.common.text.converters import to_native
 from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
     typechecked,
 )
@@ -123,7 +125,7 @@ _value:
 """
 
 
-class FilterModule(object):
+class FilterModule:
     """Ansible filter plugin for SI unit parsing."""
 
     def filters(self) -> Dict[str, Any]:
@@ -144,8 +146,11 @@ class FilterModule(object):
         :param bool optimize: Choose a human-friendly prefix for output
         :returns Dict[str, Union[float, str]]: Parsed base units and
             ``pretty`` string
+        :raises AnsibleFilterError: If parsing fails
         """
         try:
             return parse_si(value_str, binary=binary, optimize=optimize)
-        except Exception:
-            return {}
+        except Exception as e:
+            raise AnsibleFilterError(
+                f"si failed: {e.__class__.__name__}: {to_native(e)}"
+            ) from e
