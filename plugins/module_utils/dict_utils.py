@@ -181,8 +181,8 @@ def items2dict(
     for index, item in enumerate(items):
         if not isinstance(item, dict):
             raise ValueError(
-                "items2dict expects dictionaries; "
-                f"item {index} is {type(item).__name__}"
+                f"items2dict expects dictionaries; "
+                f"item {index} is {type(item).__name__}: {repr(item)}"
             )
 
         key_field: Optional[str] = None
@@ -194,8 +194,8 @@ def items2dict(
             if skip_missing_key:
                 continue
             raise ValueError(
-                "items2dict element "
-                f"{index} missing key candidates: {', '.join(key_candidates)}"
+                f"items2dict element {index} missing key candidates: "
+                f"{', '.join(key_candidates)}; got {repr(item)}"
             )
         key_value = item[key_field]
 
@@ -240,7 +240,8 @@ def items2dict(
         if collision_mode == "fail":
             if key_value in result:
                 raise ValueError(
-                    f"items2dict duplicate key '{key_value}' encountered"
+                    f"items2dict duplicate key {repr(key_value)} at index "
+                    f"{index}; got {repr(item)}"
                 )
             result[key_value] = value_payload
             continue
@@ -254,7 +255,8 @@ def items2dict(
 
         if not isinstance(value_payload, dict):
             raise ValueError(
-                "items2dict requires dict values when collision='combine'"
+                f"items2dict requires dict values when collision='combine'; "
+                f"got {type(value_payload).__name__}: {repr(value_payload)}"
             )
         if key_value not in result:
             result[key_value] = value_payload
@@ -263,7 +265,8 @@ def items2dict(
         existing_value = result[key_value]
         if not isinstance(existing_value, dict):
             raise ValueError(
-                "items2dict existing value is not a dict; cannot merge"
+                f"items2dict existing value for key {repr(key_value)} is not "
+                f"a dict; cannot merge: {repr(existing_value)}"
             )
 
         merged = _combine_dicts(
@@ -289,7 +292,10 @@ def dict2items(
 ) -> List[Dict[str, Any]]:
     """Convert dictionaries into list representations."""
     if not isinstance(mapping, dict):
-        raise ValueError("dict2items requires a dictionary input")
+        raise ValueError(
+            f"dict2items requires a dictionary input; "
+            f"got {type(mapping).__name__}: {repr(mapping)}"
+        )
 
     key_candidates = wantlist(key_name, want_list=True)
     if not key_candidates:
@@ -372,7 +378,9 @@ def _build_single_item(
             if skip_missing_key:
                 return None
             raise ValueError(
-                "dict2items requires dict values when value_name is None"
+                f"dict2items requires dict values when value_name is None; "
+                f"key {repr(key)} has {type(processed_value).__name__}: "
+                f"{repr(processed_value)}"
             )
 
         value_dict = processed_value.copy()
@@ -418,7 +426,10 @@ def _expand_list_value(
     if not isinstance(value, list):
         if skip_missing_key:
             return []
-        raise ValueError("dict2items collision='list' expects list values")
+        raise ValueError(
+            f"dict2items collision='list' expects list values; "
+            f"key {repr(key)} has {type(value).__name__}: {repr(value)}"
+        )
 
     expanded: List[Dict[str, Any]] = []
     for index, element in enumerate(value):
@@ -523,7 +534,10 @@ def rekey(
 ) -> Dict[Any, Any]:
     """Refactor dictionary keys using dict/items helpers."""
     if not isinstance(mapping, dict):
-        raise ValueError("rekey requires a dictionary input")
+        raise ValueError(
+            f"rekey requires a dictionary input; "
+            f"got {type(mapping).__name__}: {repr(mapping)}"
+        )
 
     new_key_candidates = wantlist(key_name, want_list=True)
     if not new_key_candidates:
@@ -573,7 +587,7 @@ def rekey(
                 continue
             raise ValueError(
                 f"rekey element {index} missing key candidates: "
-                f"{', '.join(new_key_candidates)}"
+                f"{', '.join(new_key_candidates)}; got {repr(value)}"
             )
 
         new_key_value = value[chosen_field]
@@ -617,7 +631,8 @@ def rekey(
         if collision == "fail":
             if new_key_value in result:
                 raise ValueError(
-                    f"rekey duplicate key '{new_key_value}' encountered"
+                    f"rekey duplicate key {repr(new_key_value)} from "
+                    f"original key {repr(original_key)}; got {repr(value)}"
                 )
             result[new_key_value] = value_payload
             continue
@@ -631,7 +646,8 @@ def rekey(
 
         if not isinstance(value_payload, dict):
             raise ValueError(
-                "rekey requires dict values when collision='combine'"
+                f"rekey requires dict values when collision='combine'; "
+                f"got {type(value_payload).__name__}: {repr(value_payload)}"
             )
 
         existing_value = result.get(new_key_value)
@@ -641,7 +657,8 @@ def rekey(
 
         if not isinstance(existing_value, dict):
             raise ValueError(
-                "rekey existing value is not a dict; cannot combine"
+                f"rekey existing value for key {repr(new_key_value)} is not "
+                f"a dict; cannot combine: {repr(existing_value)}"
             )
 
         result[new_key_value] = _combine_dicts(
@@ -683,7 +700,10 @@ def unflatten(
         {"com": {"apple": {"metadata": {"kMDItemWhereFroms": "url"}}}}
     """
     if not isinstance(flat, dict):
-        raise ValueError("unflatten requires a dictionary input")
+        raise ValueError(
+            f"unflatten requires a dictionary input; "
+            f"got {type(flat).__name__}: {repr(flat)}"
+        )
 
     sep_list = wantlist(separators, want_list=True)
     if not sep_list:
