@@ -56,10 +56,10 @@ _COMMENT_STYLES = {
 
 _DEFAULT_QUOTES: Iterable[Any] = (
     (
-        QuotedString('"', escChar="\\"),
-        QuotedString("'", escChar="\\"),
-        QuotedString('"""', escChar="\\", multiline=True),
-        QuotedString("'''", escChar="\\", multiline=True),
+        QuotedString('"', esc_char="\\"),
+        QuotedString("'", esc_char="\\"),
+        QuotedString('"""', esc_char="\\", multiline=True),
+        QuotedString("'''", esc_char="\\", multiline=True),
     )
     if HAS_PYPARSING
     else ()
@@ -138,7 +138,7 @@ def strip_comments(
     for quote in _DEFAULT_QUOTES:
         combined = combined.ignore(quote)
 
-    cleaned = combined.transformString(text)
+    cleaned = combined.transform_string(text)
 
     lines = cleaned.splitlines()
     processed: List[str] = []

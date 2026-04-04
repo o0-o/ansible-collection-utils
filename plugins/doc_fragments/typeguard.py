@@ -19,12 +19,8 @@ class ModuleDocFragment:
 
     DOCUMENTATION = r"""
 requirements:
-  - typeguard >= 4.0.0 (optional, for runtime type checking)
+  - typeguard >= 4.0.0
 notes:
-  - This collection uses C(typeguard) for optional runtime type checking.
-  - When C(typeguard) is installed, function arguments and return values
-    are validated against their type annotations at runtime.
-  - If C(typeguard) is not installed, type checking is silently skipped
-    and the collection functions normally.
-  - Install with C(pip install typeguard>=4.0.0) to enable type checking.
+  - This collection requires C(typeguard) for runtime type checking.
+  - Install with C(pip install 'typeguard>=4.0.0').
 """

@@ -4,6 +4,22 @@ o0\_o.utils Release Notes
 
 .. contents:: Topics
 
+v3.1.0
+======
+
+Minor Changes
+-------------
+
+- dict_utils - Add ``merge_hash`` function adapted from Ansible core (``ansible.utils.vars``) for use in module_utils context. Supports recursive merging and list_merge strategies (replace, keep, append, prepend, append_rp, prepend_rp).
+- module_utils - Export ``typechecked``, ``HAS_TYPEGUARD``, and ``TYPEGUARD_IMPORT_ERROR`` from package root for convenient importing.
+- si filter - Now raises ``AnsibleFilterError`` on parse failures instead of silently returning an empty dict, consistent with other filters.
+
+Bugfixes
+--------
+
+- string_utils - Update pyparsing API calls to use snake_case (``esc_char``, ``transform_string``) to resolve deprecation warnings.
+- typeguard doc fragment - Fix documentation to reflect that typeguard is required, not optional.
+
 v3.0.0
 ======
 

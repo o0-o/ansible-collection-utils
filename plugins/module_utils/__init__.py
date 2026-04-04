@@ -31,6 +31,7 @@ from ansible_collections.o0_o.utils.plugins.module_utils.truthy_utils import (  
 from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (  # noqa: E501
     dict2items,
     items2dict,
+    merge_hash,
     rekey,
     unflatten,
 )
@@ -52,27 +53,36 @@ from ansible_collections.o0_o.utils.plugins.module_utils.error_utils import (  #
 from ansible_collections.o0_o.utils.plugins.module_utils.vars_lookup_base import (  # noqa: E501
     VarsLookupBase,
 )
+from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
+    HAS_TYPEGUARD,
+    TYPEGUARD_IMPORT_ERROR,
+    typechecked,
+)
 
 __all__ = [
-    "generate_random_hostname",
-    "parse_hostname",
-    "string2items",
-    "wantlist",
-    "parse_si",
-    "truthy_or_integer",
-    "truthy_or_string",
-    "items2dict",
+    "HAS_TYPEGUARD",
+    "TYPEGUARD_IMPORT_ERROR",
+    "VarsLookupBase",
     "dict2items",
-    "rekey",
-    "unflatten",
     "format_elapsed_seconds",
     "format_epoch_timestamp",
+    "format_error_message",
+    "generate_random_hostname",
+    "items2dict",
+    "merge_hash",
     "parse_date_to_epoch",
     "parse_datetime",
     "parse_elapsed_time",
-    "time",
+    "parse_hostname",
+    "parse_si",
+    "rekey",
+    "string2items",
     "strip_comments",
+    "time",
+    "truthy_or_integer",
+    "truthy_or_string",
+    "typechecked",
+    "unflatten",
     "validate_encoding",
-    "format_error_message",
-    "VarsLookupBase",
+    "wantlist",
 ]
