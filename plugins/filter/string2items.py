@@ -23,7 +23,6 @@ from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import
 
 from ansible_collections.o0_o.utils.plugins.module_utils import string2items
 
-
 DOCUMENTATION = r"""
 ---
 name: string2items
