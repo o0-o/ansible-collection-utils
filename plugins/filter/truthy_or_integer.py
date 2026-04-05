@@ -25,7 +25,6 @@ from ansible_collections.o0_o.utils.plugins.module_utils import (
     truthy_or_integer,
 )
 
-
 DOCUMENTATION = r"""
 ---
 name: truthy_or_integer

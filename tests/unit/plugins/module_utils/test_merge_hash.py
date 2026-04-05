@@ -31,7 +31,6 @@ from ansible_collections.o0_o.utils.plugins.module_utils.dict_utils import (
     merge_hash,
 )
 
-
 # Test data adapted from Ansible's TestVariableUtils
 COMBINE_VARS_MERGE_DATA = (
     {
@@ -45,21 +44,36 @@ COMBINE_VARS_MERGE_DATA = (
         "result": {"a": 1, "b": 2, "c": {"foo": "bar", "baz": "bam"}},
     },
     {
-        "a": defaultdict(None, {"a": 1, "c": defaultdict(None, {"foo": "bar"})}),
+        "a": defaultdict(
+            None, {"a": 1, "c": defaultdict(None, {"foo": "bar"})}
+        ),
         "b": {"b": 2, "c": {"baz": "bam"}},
         "result": defaultdict(
-            None, {"a": 1, "b": 2, "c": defaultdict(None, {"foo": "bar", "baz": "bam"})}
+            None,
+            {
+                "a": 1,
+                "b": 2,
+                "c": defaultdict(None, {"foo": "bar", "baz": "bam"}),
+            },
         ),
     },
 )
 
 MERGE_HASH_DATA: dict[str, Any] = {
     "low_prio": {
-        "a": {"a'": {"x": "low_value", "y": "low_value", "list": ["low_value"]}},
+        "a": {
+            "a'": {"x": "low_value", "y": "low_value", "list": ["low_value"]}
+        },
         "b": [1, 1, 2, 3],
     },
     "high_prio": {
-        "a": {"a'": {"y": "high_value", "z": "high_value", "list": ["high_value"]}},
+        "a": {
+            "a'": {
+                "y": "high_value",
+                "z": "high_value",
+                "list": ["high_value"],
+            }
+        },
         "b": [3, 4, 4, {"5": "value"}],
     },
 }
@@ -94,7 +108,10 @@ def test_merge_hash_non_recursive_list_replace() -> None:
     low = MERGE_HASH_DATA["low_prio"]
     high = MERGE_HASH_DATA["high_prio"]
     expected = high
-    assert merge_hash(low, high, recursive=False, list_merge="replace") == expected
+    assert (
+        merge_hash(low, high, recursive=False, list_merge="replace")
+        == expected
+    )
 
 
 def test_merge_hash_non_recursive_list_keep() -> None:
@@ -102,7 +119,9 @@ def test_merge_hash_non_recursive_list_keep() -> None:
     low = MERGE_HASH_DATA["low_prio"]
     high = MERGE_HASH_DATA["high_prio"]
     expected = {"a": high["a"], "b": low["b"]}
-    assert merge_hash(low, high, recursive=False, list_merge="keep") == expected
+    assert (
+        merge_hash(low, high, recursive=False, list_merge="keep") == expected
+    )
 
 
 def test_merge_hash_non_recursive_list_append() -> None:
@@ -110,7 +129,9 @@ def test_merge_hash_non_recursive_list_append() -> None:
     low = MERGE_HASH_DATA["low_prio"]
     high = MERGE_HASH_DATA["high_prio"]
     expected = {"a": high["a"], "b": low["b"] + high["b"]}
-    assert merge_hash(low, high, recursive=False, list_merge="append") == expected
+    assert (
+        merge_hash(low, high, recursive=False, list_merge="append") == expected
+    )
 
 
 def test_merge_hash_non_recursive_list_prepend() -> None:
@@ -118,7 +139,10 @@ def test_merge_hash_non_recursive_list_prepend() -> None:
     low = MERGE_HASH_DATA["low_prio"]
     high = MERGE_HASH_DATA["high_prio"]
     expected = {"a": high["a"], "b": high["b"] + low["b"]}
-    assert merge_hash(low, high, recursive=False, list_merge="prepend") == expected
+    assert (
+        merge_hash(low, high, recursive=False, list_merge="prepend")
+        == expected
+    )
 
 
 def test_merge_hash_non_recursive_list_append_rp() -> None:
@@ -126,7 +150,10 @@ def test_merge_hash_non_recursive_list_append_rp() -> None:
     low = MERGE_HASH_DATA["low_prio"]
     high = MERGE_HASH_DATA["high_prio"]
     expected = {"a": high["a"], "b": [1, 1, 2] + high["b"]}
-    assert merge_hash(low, high, recursive=False, list_merge="append_rp") == expected
+    assert (
+        merge_hash(low, high, recursive=False, list_merge="append_rp")
+        == expected
+    )
 
 
 def test_merge_hash_non_recursive_list_prepend_rp() -> None:
@@ -134,7 +161,10 @@ def test_merge_hash_non_recursive_list_prepend_rp() -> None:
     low = MERGE_HASH_DATA["low_prio"]
     high = MERGE_HASH_DATA["high_prio"]
     expected = {"a": high["a"], "b": high["b"] + [1, 1, 2]}
-    assert merge_hash(low, high, recursive=False, list_merge="prepend_rp") == expected
+    assert (
+        merge_hash(low, high, recursive=False, list_merge="prepend_rp")
+        == expected
+    )
 
 
 def test_merge_hash_recursive_list_replace() -> None:
@@ -152,7 +182,9 @@ def test_merge_hash_recursive_list_replace() -> None:
         },
         "b": high["b"],
     }
-    assert merge_hash(low, high, recursive=True, list_merge="replace") == expected
+    assert (
+        merge_hash(low, high, recursive=True, list_merge="replace") == expected
+    )
 
 
 def test_merge_hash_recursive_list_keep() -> None:
@@ -188,7 +220,9 @@ def test_merge_hash_recursive_list_append() -> None:
         },
         "b": low["b"] + high["b"],
     }
-    assert merge_hash(low, high, recursive=True, list_merge="append") == expected
+    assert (
+        merge_hash(low, high, recursive=True, list_merge="append") == expected
+    )
 
 
 def test_merge_hash_recursive_list_prepend() -> None:
@@ -206,7 +240,9 @@ def test_merge_hash_recursive_list_prepend() -> None:
         },
         "b": high["b"] + low["b"],
     }
-    assert merge_hash(low, high, recursive=True, list_merge="prepend") == expected
+    assert (
+        merge_hash(low, high, recursive=True, list_merge="prepend") == expected
+    )
 
 
 def test_merge_hash_recursive_list_append_rp() -> None:
@@ -224,7 +260,10 @@ def test_merge_hash_recursive_list_append_rp() -> None:
         },
         "b": [1, 1, 2] + high["b"],
     }
-    assert merge_hash(low, high, recursive=True, list_merge="append_rp") == expected
+    assert (
+        merge_hash(low, high, recursive=True, list_merge="append_rp")
+        == expected
+    )
 
 
 def test_merge_hash_recursive_list_prepend_rp() -> None:
@@ -242,7 +281,10 @@ def test_merge_hash_recursive_list_prepend_rp() -> None:
         },
         "b": high["b"] + [1, 1, 2],
     }
-    assert merge_hash(low, high, recursive=True, list_merge="prepend_rp") == expected
+    assert (
+        merge_hash(low, high, recursive=True, list_merge="prepend_rp")
+        == expected
+    )
 
 
 def test_merge_hash_invalid_list_merge() -> None:

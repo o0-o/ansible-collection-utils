@@ -34,7 +34,6 @@ from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import
 
 from ansible_collections.o0_o.utils.plugins.module_utils import wantlist
 
-
 ITEMS_VALID_COLLISIONS = {"fail", "list", "combine"}
 _VALID_LIST_MERGE = frozenset(
     ("replace", "keep", "append", "prepend", "append_rp", "prepend_rp")
