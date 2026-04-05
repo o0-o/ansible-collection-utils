@@ -81,7 +81,7 @@ MERGE_HASH_DATA: dict[str, Any] = {
 
 @pytest.mark.parametrize("test_data", COMBINE_VARS_MERGE_DATA)
 def test_merge_hash_basic(test_data: dict[str, Any]) -> None:
-    """Test basic merge_hash behavior matches combine_vars merge mode."""
+    """Test merge_hash matches combine_vars merge."""
     assert merge_hash(test_data["a"], test_data["b"]) == test_data["result"]
 
 
