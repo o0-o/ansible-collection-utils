@@ -24,7 +24,7 @@ DOCUMENTATION = r"""
 ---
 name: strip_comments
 short_description: Remove comments from multiline text
-version_added: "1.5.0"
+version_added: "1.6.0"
 description:
   - Wraps the C(o0_o.utils.strip_comments) helper to make it available as
     an Ansible Jinja2 filter.

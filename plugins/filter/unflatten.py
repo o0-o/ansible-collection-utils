@@ -29,7 +29,7 @@ DOCUMENTATION = r"""
 ---
 name: unflatten
 short_description: Convert flat dictionary with delimited keys to nested dict
-version_added: "1.6.0"
+version_added: "2.2.0"
 description:
   - >-
     Transforms flat dictionaries with delimited keys into nested dictionary
