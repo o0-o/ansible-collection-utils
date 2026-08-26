@@ -171,5 +171,5 @@ class FilterModule:
             raise
         except Exception as exc:  # pragma: no cover - defensive guard
             raise AnsibleFilterError(
-                "rekey failed: " f"{exc.__class__.__name__}: {to_native(exc)}"
+                f"rekey failed: {exc.__class__.__name__}: {to_native(exc)}"
             ) from exc

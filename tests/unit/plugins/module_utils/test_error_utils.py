@@ -38,9 +38,7 @@ class TestFormatErrorMessage:
         errors = [ValueError("first"), TypeError("second")]
         result = format_error_message(errors)
         assert result == (
-            "2 errors encountered: "
-            "(1) ValueError: first "
-            "(2) TypeError: second"
+            "2 errors encountered: (1) ValueError: first (2) TypeError: second"
         )
 
     def test_three_errors_at_limit(self) -> None:
@@ -85,9 +83,7 @@ class TestFormatErrorMessage:
         errors = [ValueError("a"), TypeError("b"), KeyError("c")]
         result = format_error_message(errors, max_display=1)
         assert result == (
-            "3 errors encountered: "
-            "(1) ValueError: a "
-            "... and 2 other errors"
+            "3 errors encountered: (1) ValueError: a ... and 2 other errors"
         )
 
     def test_mixed_exceptions_and_strings(self) -> None:

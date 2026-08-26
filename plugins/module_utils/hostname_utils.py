@@ -143,12 +143,8 @@ def parse_hostname(data: Any) -> Dict[str, Any]:
     ascii_name = None
     try:
         # IDNA round-trip for strict validation and normalization
-        ascii_name = idna.encode(hostname_no_dot).decode(
-            "ascii"
-        )  # type: ignore[name-defined]
-        unicode_name = idna.decode(
-            ascii_name.encode("ascii")
-        )  # type: ignore[name-defined]
+        ascii_name = idna.encode(hostname_no_dot).decode("ascii")  # type: ignore[name-defined]
+        unicode_name = idna.decode(ascii_name.encode("ascii"))  # type: ignore[name-defined]
     except Exception:
         rfc5891_compliant = False
         unicode_name = hostname_no_dot

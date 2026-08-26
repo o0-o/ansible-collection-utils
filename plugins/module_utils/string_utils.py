@@ -96,8 +96,7 @@ def _ensure_parser_elements(
         return elements
 
     raise TypeError(
-        "comment_style must be a string, ParserElement, "
-        "or sequence of either"
+        "comment_style must be a string, ParserElement, or sequence of either"
     )
 
 
