@@ -47,7 +47,7 @@ def test_parse_si_success(
 ) -> None:
     """Verify parse_si returns canonical values for typical inputs."""
     result = parse_si(value, **kwargs)
-    assert result
+    assert result != {}
     for key, val in expected.items():
         assert result[key] == val
 

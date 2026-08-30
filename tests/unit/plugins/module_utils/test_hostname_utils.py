@@ -115,7 +115,7 @@ def test_parse_hostname_success(
 ) -> None:
     """Verify hostname parsing populates expected fields."""
     result = parse_hostname(value)
-    assert result
+    assert result != {}
     for key, val in expected.items():
         assert result.get(key) == val
     for missing in absent:
@@ -217,8 +217,8 @@ def test_generate_random_hostname_default_length() -> None:
     """Test hostname generation with default length."""
     hostname = generate_random_hostname()
     assert len(hostname) == 16
-    assert hostname.islower()
-    assert hostname.isalpha()
+    assert hostname.islower() is True
+    assert hostname.isalpha() is True
 
 
 @pytest.mark.parametrize("length", [1, 5, 8, 16, 32, 64])
@@ -226,8 +226,8 @@ def test_generate_random_hostname_custom_length(length: int) -> None:
     """Test hostname generation with various custom lengths."""
     hostname = generate_random_hostname(length)
     assert len(hostname) == length
-    assert hostname.islower()
-    assert hostname.isalpha()
+    assert hostname.islower() is True
+    assert hostname.isalpha() is True
 
 
 def test_generate_random_hostname_only_lowercase_letters() -> None:
@@ -250,11 +250,11 @@ def test_generate_random_hostname_rfc_compliant() -> None:
     """Test that generated hostnames are RFC-compliant."""
     hostname = generate_random_hostname()
     # RFC requires hostnames start with letter (not digit)
-    assert hostname[0].isalpha()
+    assert hostname[0].isalpha() is True
     # No digits, hyphens, or other characters
-    assert hostname.isalpha()
+    assert hostname.isalpha() is True
     # All lowercase for consistency
-    assert hostname.islower()
+    assert hostname.islower() is True
 
 
 def test_generate_random_hostname_invalid_length() -> None:
