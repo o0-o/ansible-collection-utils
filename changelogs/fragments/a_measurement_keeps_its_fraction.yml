@@ -1,0 +1,13 @@
+# vim: ts=2:sw=2:sts=2:et:ft=yaml.ansible
+# -*- mode: yaml; yaml-indent-offset: 2; indent-tabs-mode: nil; -*-
+---
+bugfixes:
+  - >-
+    parse_si - a fractional measurement keeps its fraction. The base
+    value was cast to int unconditionally, which is right for the
+    counts the parser was written for - bytes and hertz land whole -
+    and floored everything else, so ``1.2 V`` published ``v: 1``
+    beside a pretty that said 1.2 and the fact contradicted itself. A
+    value that lands whole in base units is still an int; one that
+    does not keeps what the vendor printed
+    (https://github.com/o0-o/ansible-collection-utils/pull/XXX).

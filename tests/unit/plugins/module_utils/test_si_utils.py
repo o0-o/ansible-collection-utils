@@ -116,3 +116,28 @@ def test_parse_si_binary_mode_for_si_prefix() -> None:
     result = parse_si("32GB", binary=True)
     assert result["bytes"] == 34359738368
     assert result["pretty"] == "32 GiB"
+
+
+def test_parse_si_fraction_survives_in_base_units() -> None:
+    """A measurement keeps its fraction where the base unit is the
+    unit it was printed in.
+
+    "1.2 V" floored to 1 while pretty said 1.2 beside it - the fact
+    contradicted itself. A value that lands whole is still an int.
+    """
+    result = parse_si("1.2 V")
+    assert result["v"] == 1.2
+    assert isinstance(result["v"], float)
+    assert result["pretty"] == "1.2 V"
+
+    whole = parse_si("2 V")
+    assert whole["v"] == 2
+    assert isinstance(whole["v"], int)
+
+
+def test_parse_si_counts_stay_integers() -> None:
+    """A fractional prefix form that lands whole in base units is a
+    count, and a count is an int."""
+    result = parse_si("1.5GB")
+    assert result["bytes"] == 1500000000
+    assert isinstance(result["bytes"], int)

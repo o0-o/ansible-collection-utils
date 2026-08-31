@@ -77,7 +77,7 @@ IEC_MULTIPLIERS = {
 @typechecked
 def parse_si(
     value_str: Any, binary: bool = False, optimize: bool = True
-) -> Dict[str, Union[int, str]]:
+) -> Dict[str, Union[int, float, str]]:
     """Parse a value with SI or IEC units to base units.
 
     Supports SI prefixes (k..Q) and IEC binary prefixes (Ki..Yi). When
@@ -89,9 +89,11 @@ def parse_si(
         Non-string values return an empty dict.
     :param binary: Interpret SI prefixes as IEC binary
     :param optimize: Optimize the prefix for pretty display
-    :returns: Dict with canonical base unit key and integer value
-        plus ``pretty``
-        (for example: ``{"bytes": 34359738368, "pretty": "32 GiB"}``)
+    :returns: Dict with canonical base unit key and numeric value -
+        an int where the value lands whole, a float where a
+        measurement carries a fraction - plus ``pretty``
+        (for example: ``{"bytes": 34359738368, "pretty": "32 GiB"}``
+        or ``{"v": 1.2, "pretty": "1.2 V"}``)
     """
     if not value_str or not isinstance(value_str, str):
         return {}
@@ -175,6 +177,14 @@ def parse_si(
             pretty = f"{display_str} {base_unit}"
 
         canonical_unit = BASE_UNITS.get(base_unit, base_unit.lower())
-        return {canonical_unit: int(base_value), "pretty": pretty}
+        # A count lands whole and stays an int; a measurement like
+        # "1.2 V" keeps its fraction rather than flooring to a value
+        # the pretty form beside it contradicts. Rounding first sheds
+        # binary float artifacts (1.2 * 1.0 style) without moving any
+        # value a vendor would print.
+        base_value = round(base_value, 9)
+        if base_value == int(base_value):
+            base_value = int(base_value)
+        return {canonical_unit: base_value, "pretty": pretty}
     except (ValueError, TypeError):
         return {}
