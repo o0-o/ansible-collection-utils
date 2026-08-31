@@ -50,9 +50,6 @@ from ansible_collections.o0_o.utils.plugins.module_utils.string_utils import (  
 from ansible_collections.o0_o.utils.plugins.module_utils.error_utils import (  # noqa: E501
     format_error_message,
 )
-from ansible_collections.o0_o.utils.plugins.module_utils.vars_lookup_base import (  # noqa: E501
-    VarsLookupBase,
-)
 from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import (  # noqa: E501
     HAS_TYPEGUARD,
     TYPEGUARD_IMPORT_ERROR,
@@ -62,7 +59,6 @@ from ansible_collections.o0_o.utils.plugins.module_utils.typeguard_compat import
 __all__ = [
     "HAS_TYPEGUARD",
     "TYPEGUARD_IMPORT_ERROR",
-    "VarsLookupBase",
     "dict2items",
     "format_elapsed_seconds",
     "format_epoch_timestamp",

@@ -1,0 +1,18 @@
+---
+breaking_changes:
+  - >-
+    VarsLookupBase is removed. It moves to o0_o.core, which is where
+    runtime machinery lives: this collection's one testable property is
+    that it imports nothing from the Ansible runtime, and a base class
+    reaching into the templar for variables was the single file that
+    broke it. A module_util has no redirect mechanism, so a consumer
+    imports ``VarsLookupBase`` from ``o0_o.core`` instead
+    (https://github.com/o0-o/ansible-collection-utils/pull/XXX).
+  - >-
+    The ``var`` lookup is removed, and moves to o0_o.core as
+    ``o0_o.core.var`` with the base class it extends. This collection
+    sits at the bottom of the ladder and imports nothing above itself,
+    so keeping the plugin here while its machinery moved would have
+    inverted that. No redirect is left behind: replace
+    ``o0_o.utils.var`` with ``o0_o.core.var``
+    (https://github.com/o0-o/ansible-collection-utils/pull/XXX).
